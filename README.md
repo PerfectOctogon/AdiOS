@@ -25,3 +25,4 @@ I am getting interested in cyber security and related fields so I thought : what
     - Docker for containerization
     - Qemu for OS virtualization
     - Xorriso for creating iso image
+    - GNU GRUB as bootloader
