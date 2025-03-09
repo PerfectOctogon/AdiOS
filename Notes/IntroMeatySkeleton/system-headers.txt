@@ -1,0 +1,9 @@
+System headers define types, constants and function prototypes needed for both kernel and user-space
+
+There is a headers.sh script that installs these headers in the system root to prepare for compilation. 
+
+Free standing headers (stddef.h, stdint.h) come with cross compilers but lack implementations for many functions.
+
+headers.sh dows not compile the OS itself - it only sets up headers for later use.
+
+A hosted GCC cross-compiler (supporting user-space) will later require these headers. 

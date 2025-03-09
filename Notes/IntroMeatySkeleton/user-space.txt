@@ -1,0 +1,9 @@
+The environment where applications and programs execute, separate from the kernel
+
+It has:
+    - Restricted access
+    - No direct access to hardware (must go through kernel using syscalls)
+    - Processes are isolated from each other (prevents one process from interfering with another)
+    - Crash in user space affects only the crashed process, not the entire OS
+
+Examples : web browsers. text editors, games etc

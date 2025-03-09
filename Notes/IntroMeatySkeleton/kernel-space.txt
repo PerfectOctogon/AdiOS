@@ -1,0 +1,7 @@
+A priviledged part of an OS where the kernel runs and has direct access to hardware.
+
+It has:
+    - Full priviledge
+    - Direct access to memory, CPU and hardware
+    - Process scheduling, memory management and IO control
+    - Kernel panic crashes the whole system
