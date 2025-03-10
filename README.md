@@ -31,6 +31,7 @@ I am getting interested in cyber security and related fields so I thought : what
 Before you can run this, you will need to install a cross compiler targeting i686-elf. There should be resources online showing how to install this compiler. Or, you can make your own!
 Then, install Qemu - for OS virtualization.
 Finally, give execute permissions to all the .sh files inside the root directory (build.sh, config.sh etc). Then, run the following commands:
+
     - ./clean.sh
     - ./build.sh
     - ./iso.sh
