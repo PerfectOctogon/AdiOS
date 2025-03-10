@@ -26,3 +26,19 @@ I am getting interested in cyber security and related fields so I thought : what
     - Qemu for OS virtualization
     - Xorriso for creating iso image
     - GNU GRUB as bootloader
+
+# How to run
+Before you can run this, you will need to install a cross compiler targeting i686-elf. There should be resources online showing how to install this compiler. Or, you can make your own!
+Then, install Qemu - for OS virtualization.
+Finally, give execute permissions to all the .sh files inside the root directory (build.sh, config.sh etc). Then, run the following commands:
+    - ./clean.sh
+    - ./build.sh
+    - ./iso.sh
+    - ./qemu.sh
+
+./clean.sh clears out all the files that were build in the previous build
+./build.sh compiles the kernel
+./iso.sh creates a bootable iso image for the kernel
+./qemu.sh starts qemu with the iso image you created
+
+
