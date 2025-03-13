@@ -1,0 +1,15 @@
+UEFI - Unified Extensible Firmware Interface
+
+Checks for valid GPT (GUID(Globally unique identifier) Valid partition table)
+
+In the boot sector, it checks for GPT. 
+
+Protected MBR makes sure if it's booted on a legacy device, it can attempt to boot. 
+
+GPT headers (Primary GPT header, secondary GPT header)
+
+Entries, Partition tables decribe the partitions.
+
+FAT32 (File allocation table) - a type of filesystem. FAT32 boot partition. Contains directory called EFI/boot
+
+Operating systems in UEFI are executable files in the format PE (Portable executable)
