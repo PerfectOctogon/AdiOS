@@ -1,0 +1,3 @@
+Kernel is inside kernel/
+
+Kernel installs its public kernel headers into sysroot/usr/include/kernel. This is useful if you decide to create a kernel with modules, where modules can then simply include the public headers from the main kernel.

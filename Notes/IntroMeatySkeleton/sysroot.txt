@@ -1,0 +1,9 @@
+I have created sysroot folder inside the main directory. When you compile programs for your local operating system, the compiler locates headers inside /usr/include and /usr/lib
+
+However, these files are not usable for our own OS. So we need our own version of these files which I have included inside "sysroot" folder inside /usr/include and /usr/lib
+
+sysroot acts as a fake root directory for the OS. As we continue building the OS components (kernel, stdlb, programs), we will gradually install them into the sysroot. It will, eventually become the main root folder of our OS.
+
+Makefile will install the system headers into sysroot/usr/include and the system libraries into sysroot/usr/lib. The kernel itself will be installed into sysroot/boot
+
+The -elf targets inside the makefile have no user-space and are incapable of having one. The compiler will be configured with system root support, so it will look in usr/lib. But not usr/include because we are preventing the compiler from searching for a standard library using the --without-headers option when building i686-elf-gcc. Eventually, we will have user-space and configure custom cross-gcc and we can look into usr/include, but till then, we will pass -isystem=/usr/include as a workaround.

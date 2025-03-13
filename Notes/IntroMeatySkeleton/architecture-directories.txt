@@ -1,0 +1,1 @@
+All architecture dependent source files are inside arch/ directory with their own sub-makefile that has special configurations. This will separate the systems the OS supports and make it easier to port to other systems in the future.

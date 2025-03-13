@@ -1,0 +1,67 @@
+Source : https://www.youtube.com/watch?v=G3mS1QHZprs&t=2110s
+
+BIOS - Basic input output
+Standard set by IBM - IBM PC BIOS in 1989
+Also known as Legacy BIOS/ BIOS or CSM
+
+BIOS is a software written directly on the motherboard.
+
+UEFI - Unified extensible firmware interface
+Came out in 2006
+Became popular in 2012 around when windows 8 came out
+
+Legacy BIOS is easier to work with as it is much simpler than UEFI.
+UEFI is a sophisticated piece of firmware
+
+BIOS - on boot
+
+1) POST - power-on self-test (Is everything is fine with the motherboard and all the other hardware connected to the motherboard
+2) Checks boot priority list - a list of all mass storage units connected to the motherboard. These mass storage devices can potentially contain a bootable iso image for an OS
+
+How does the BIOS know that a mass storage device contains bootable code?
+
+Every mass storage device is split into chunks of data called sectors
+These sectors are typically 512 bytes long
+
+The first sector of the mass storage device is called the boot sector
+
+The legacy BIOS puts this boot sector into RAM at memory address 0x7C00
+
+Now, how do we know that this is actually a bootable image?
+The last 2 bytes(word) contain a "signature" that tells BIOS that this is indeed a bootable sector.
+
+The people that set the BIOS standard decided the signature to be 16 bits long. It also has dual purpose - it is a good test for the 8-bit bus
+
+They tought of the 8 bit value 01010101(0x55) and the other value 10101010(0xAA)
+
+When sent in a 8-bit bus, the first bits in the first byte is flipped, so the first byte becomes - 10101010. Which is exactly the second byte.
+
+This tells the BIOS that this sector can indeed be booted. The BIOS instructs the CPU to execute code loaded at memory address 0x7C00.
+
+Right now, we don't want our CPU executing any instructions, so we need fill in the first 510 bytes with 0's. 
+
+We are going to be placing code inside our boot sector. We have to subtract the amount of bytes our previous instructions took up. And fill in the rest with 0's. 
+
+Assemblers let you get the current instruction address. With $. From that, subtract ox7C00. 
+
+Formula = $ - 0x7C00 = This would be the number of bytes the instructions take up.
+
+So now, if we do 510 - ($ - 0x7C00) we will get the amount of bytes we will need to fill up with 0's.
+
+Some assemblers don't let you do $ - 7C00, so use $ - $$. $$ gets the address of the section we're in. 
+
+If your OS doesn't have an "infinite loop", once the CPU stops executing instructions, BIOS will look into the next mass storage device on the boot priority list and start booting up whatever OS is in that. 
+
+The easiest way to make an infinite loop is to use a jump instruction. Or, "jmp".
+
+	- jmp $ (Jump to the current memory address infinitely)
+
+Most BIOS will boot you into VGA text mode 24 chars. 
+
+MBR - Master Boot Record
+A popular standard for how to use the boot sector. 
+
+You get a chunk of space (440 Bytes) to execute code. Right after code, you need a "disk signature". Uniquely identify disk / mass storage device (4 bytes). Then, we get a "reserved section" which is supposed to just be 0's (2B of zeroes). After that, partition tables. 4 partitions. All 4 partitions will each have 4 entries of 16 bytes. Last 2 bytes contain the AA55 signature. 
+
+The only time we might need to implement a MBR is when we need a file-system.
+
