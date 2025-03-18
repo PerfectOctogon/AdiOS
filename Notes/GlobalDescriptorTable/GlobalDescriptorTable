@@ -42,7 +42,7 @@ What is it comprised of?
 
 - NULL descriptor
 - Code and data descriptors
-- Task state segment descriptor (TSSD)
+- Task state segment descriptor (TSSD) (optional for now)
 - GDTR - GDT register
 
 Null descriptor is 64 bits of 0's. Allows CPU to nullify descriptors and properly deal with GPF's
@@ -168,3 +168,5 @@ MOV DS, AX
 JMP MAIN32
 
 Cannot use BIOS anymore to display values for example.
+
+For now, the bootloader (GRUB) has set up a GDT for us. But when we switch over to 64-bit protected mode, we will have to define a new 64-bit GDT.

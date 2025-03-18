@@ -1,0 +1,90 @@
+In general purpose bootloaders, kernel is booted in 32-bit. So the 32-bit GDT should already be defined. If we expect the kernel's entry point to be in long mode, the bootloader should have enable paging, and described the 64-bit GDT and started the CPU in 64-bit mode and loaded the kernel in.
+
+A bootloader shouldn't usually do advanced things like setting up paging.
+
+Detecting if long mode is available. We need to check if the CPU is long mode compatible before we try switching over to 64 bits.
+
+CPUID - instruction that lets you identify information about the CPU. Most assembler support typing just the pneomonic.
+
+In order to detect whether CPUID exists, check if we can flip the 22nd youngest CPU flag.
+
+PUSHF pushes CPU flags onto the stack. Need to specify size of flags we are going to push. PUSHFD - push flags as a dword.
+
+BP - base pointer (where stack begins)
+SP - stack pointer is the address of the last address that was pushed onto the stack
+
+Initialize these two values so we can use the stack!
+
+mov BP, 0x7C00
+MOV SP, BP
+
+We can now pop the flags 
+
+POP EAX --> Popping a flag into the Extended A register
+MOV ECX, EAX --> Store a copy of this flag
+XOR EAX, 1 << 21 --> Flipping the 22nd youngest bit from the CPU flags or the 21st flag (index 0)
+PUSH EAX --> Push it onto the stack
+POPFD --> Pop the flags you pushed into the stack from the EAX and put them into the CPU flags
+PUSHFD --> We will be checking if the flag was flipped, so lets pushfd to dump the CPU flags into the stack
+POP EAX --> Lets pop the flags into EAX
+PUSH ECX --> We don't want to modify the CPU flags like that, so we will push back the original value we copied into ECX
+POPFD --> Restore flag
+
+Now, we need to verify if we actually were able to flip that bit
+XOR EAX, ECX --> Checking if something is different
+JZ Error --> Jump if zero flag is set (cpuid doesn't exist as 21st flag couldn't be flipped)
+
+Now we, know cpuid exists. But we don't know if cpuid extended functionality is supported. 
+
+CPUID uses param and stores it into EAX
+
+0x80000000 - This is where the extended functionality starts
+
+The first instruction tells us if these extended functionalities are even supported
+
+Our hope is that the EAX register somehow gets larger
+
+MOV EAX, 0x80000000 --> move this value into EAX and then we will check if the CPUID makes EAX larger
+CPUID
+CMP EAX, 0x80000001 --> Checking if EAX got larger
+JB ERROR --> If EAX didn't get larger, then extended functionality isn't supported
+
+Now that we've verified extended functionality is supported
+MOV EAX, 0x80000001
+CPUID --> This will now store various CPU information into the different CPU registers
+The one we want is the 30th youngest bit of the EDX register (bit 29). If this bit is 1, long mode is supported
+TEST EDX, 1 << 29 --> Test instruction performs AND on the individual bits, in our case the 29th bit. Zero flag will NOT be set
+JZ ERROR --> jump to error if zero flag was set
+
+Paging
+Virtual memory management. Some of the physical memory (RAM). 
+
+Using physical address, you can take a voltmeter and check for bits. It physically tells you where you can find something in your RAM.
+
+Virtual memory comes with its own virtual addresses. It can have different forms.
+
+We have some virtual address from our virtual memory, but this doesn't actually tell us where this data is found in the RAM. This is fully logical. This is fully virtual. It's for the kernel, programs and whatnot.
+
+Virtual memory might be easier to handle.
+
+Segmentation
+The idea of segmentation is that you split memory into segments that are physically found in the RAM. Can be managed in the virtual memory. 
+
+When you run some process in user space, we can have a segment of memory dedicated to that process. If a program tries to access something outside of its segment, you get a segmentation fault.
+
+Another virtual memory management technique is called paging. Paging does the following :
+Consider physical memory to be split into equally sized chunks. Frames one after the other
+Paging splits virtual memory into equal sized chunks called pages. It's abstract, you cannot even say a page is after an other without it being an abstraction, it doesn't make any physical sense.
+
+Size of the frame is the same as the size of the page.
+
+Page frame allocator. 
+
+Paging allows you to do somethings an extra layer of abstraction lets you do
+4 bytes of data - standard size of a page
+
+We have two processes P1 and P2 that we want to access with data
+
+So lets say the 4 KB is somewhere physically in RAM. The two processes can access RAM through this page?? The actual frames in memory are different. Allows for an extra layer of security through abstraction.
+
+Some part of the disk is dedicated to storing pages. So pages can also be found in the disk. 
