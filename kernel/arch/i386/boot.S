@@ -59,10 +59,26 @@ checkcpuid:
 
 # Check if extended functionality exists
 checkextfunc:
-	mov eax, 0x80000000 # 
+	mov eax, 0x80000000 # Function number for querying extended functionality
+	cpuid
+	cmp eax, 0x80000001 # Check if EAX got larger
+	jb .noextfunc
+
+	mov eax, 0x80000001
+	cpuid # This will now store various CPU information into different registers
+	test edx, 1 << 29 # Checking the 30th youngest bit of the EDX register to see if we have long mode support
+	jz .nolongmode # If it's 0, we don't have long mode support
 
 .nocpuid:
 	mv al, "C"
+	jmp error
+
+.noextfunc:
+	mv al, "E"
+	jmp error
+
+.nolongmode:
+	mv al, "L"
 	jmp error
 
 error:
