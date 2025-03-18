@@ -20,6 +20,7 @@ MOV SP, BP
 
 We can now pop the flags 
 
+PUSHFD
 POP EAX --> Popping a flag into the Extended A register
 MOV ECX, EAX --> Store a copy of this flag
 XOR EAX, 1 << 21 --> Flipping the 22nd youngest bit from the CPU flags or the 21st flag (index 0)

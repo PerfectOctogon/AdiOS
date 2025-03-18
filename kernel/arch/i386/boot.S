@@ -29,6 +29,9 @@ _start:
 	# Call the global constructors.
 	call _init
 
+	# Lets check for cpuid
+	call checkcpuid
+
 	# Transfer control to the main kernel.
 	call kernel_main
 
@@ -37,3 +40,34 @@ _start:
 1:	hltha
 	jmp 1b
 .size _start, . - _start
+
+# Check if CPUID exists
+checkcpuid:
+	pushfd # Dump CPU flags into the stack
+	pop eax # Pop the flags into the EAX register
+	mov ecx, eax # Storing a copy of these flags so we don't end up modifying the CPU flags
+	xor eax, 1 << 21 # Flipping the 21st bit. If we can flip this, we can use CPUID
+	push eax # Push the modified flags into the stack
+	popfd # Put the modified flags into the CPU flags register
+	pushfd # Lets check if the bit was flipped and restore the flags
+	pop eax
+	push ecx # ECX contains our original copy of our flags
+	popfd # Restore the flags
+	cmp eax, ecx # Let's compare EAX and ECX
+	jz .nocpuid # If zero flag was set, then the bit was not flipped, so jump to nocpuid error
+	ret
+
+# Check if extended functionality exists
+checkextfunc:
+	mov eax, 0x80000000 # 
+
+.nocpuid:
+	mv al, "C"
+	jmp error
+
+error:
+    mov dword [0xb8000], 0x4f524f45
+    mov dword [0xb8004], 0x4f3a4f52
+    mov dword [0xb8008], 0x4f204f20
+    mov byte [0xb800a], al
+    hlt
