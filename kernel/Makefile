@@ -1,5 +1,5 @@
 DEFAULT_HOST!=../default-host.sh
-HOST?=DEFAULT_HOST
+HOST?=$(DEFAULT_HOST)
 HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
 
 CFLAGS?=-O2 -g
@@ -19,6 +19,9 @@ LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
 ARCHDIR=arch/$(HOSTARCH)
+$(info HOST=$(HOST))
+$(info HOSTARCH=$(HOSTARCH))
+$(info ARCHDIR=$(ARCHDIR))
 
 include $(ARCHDIR)/make.config
 
