@@ -41,9 +41,10 @@ _start:
 	# Now, we can enable paging
 	call enable_pae_paging
 
+	lgdt [gdt64.pointer] # Load the global descriptor table
+    jmp gdt64.code_segment:long_mode_start # Now, we can move to long mode code :3
 
-	# Transfer control to the main kernel.
-	call kernel_main
+	hlt
 
 	# Hang if kernel_main unexpectedly returns.
 	cli
@@ -146,3 +147,14 @@ error:
     mov dword [0xb8008], 0x4f204f20
     mov byte [0xb800a], al
     hlt
+
+# Describe the GDT for long mode
+section .rodata
+gdt64:
+    dq 0
+.code_segment: equ $ - gdt64
+    dq (1 << 43) | (1 <<44) | (1 << 47) | (1 << 53)
+
+.pointer:
+    dw $ - gdt64 - 1
+    dq gdt64

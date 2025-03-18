@@ -3,5 +3,5 @@
 
 void kernel_main(void){
     terminal_initialize();
-    printf("Welcome to adios\n");
+    printf("Welcome to the 64-bit adios kernel\n");
 }
