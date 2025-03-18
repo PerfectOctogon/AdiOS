@@ -23,6 +23,7 @@ stack_top:
 .section .text
 .global _start
 .type _start, @function
+.extern long_mode_start
 _start:
 	movl $stack_top, %esp
 
@@ -42,119 +43,104 @@ _start:
 	call enable_pae_paging
 
 	lgdt [gdt64.pointer] # Load the global descriptor table
-    jmp gdt64.code_segment:long_mode_start # Now, we can move to long mode code :3
+    ljmp $gdt64.code_segment, $long_mode_start # Now, we can move to long mode code :3
 
 	hlt
-
-	# Hang if kernel_main unexpectedly returns.
-	cli
-1:	hltha
-	jmp 1b
 .size _start, . - _start
 
 # Check if CPUID exists
 checkcpuid:
-	pushfd # Dump CPU flags into the stack
-	pop eax # Pop the flags into the EAX register
-	mov ecx, eax # Storing a copy of these flags so we don't end up modifying the CPU flags
-	xor eax, 1 << 21 # Flipping the 21st bit. If we can flip this, we can use CPUID
-	push eax # Push the modified flags into the stack
-	popfd # Put the modified flags into the CPU flags register
-	pushfd # Lets check if the bit was flipped and restore the flags
-	pop eax
-	push ecx # ECX contains our original copy of our flags
-	popfd # Restore the flags
-	cmp eax, ecx # Let's compare EAX and ECX
+	pushf # Dump CPU flags into the stack
+	pop %eax # Pop the flags into the EAX register
+	mov %eax, %ecx # Storing a copy of these flags so we don't end up modifying the CPU flags
+	xor %eax, 1 << 21 # Flipping the 21st bit. If we can flip this, we can use CPUID
+	push %eax # Push the modified flags into the stack
+	popf # Put the modified flags into the CPU flags register
+	pushf # Lets check if the bit was flipped and restore the flags
+	pop %eax
+	push %ecx # ECX contains our original copy of our flags
+	popf # Restore the flags
+	cmp %eax, %ecx # Let's compare EAX and ECX
 	jz .nocpuid # If zero flag was set, then the bit was not flipped, so jump to nocpuid error
 	ret
 
 # Check if extended functionality exists
 checkextfunc:
-	mov eax, 0x80000000 # Function number for querying extended functionality
+	mov %eax, 0x80000000 # Function number for querying extended functionality
 	cpuid
-	cmp eax, 0x80000001 # Check if EAX got larger
+	cmp %eax, 0x80000001 # Check if EAX got larger
 	jb .noextfunc
 
-	mov eax, 0x80000001
+	mov %eax, 0x80000001
 	cpuid # This will now store various CPU information into different registers
-	test edx, 1 << 29 # Checking the 30th youngest bit of the EDX register to see if we have long mode support
+	test %edx, 1 << 29 # Checking the 30th youngest bit of the EDX register to see if we have long mode support
 	jz .nolongmode # If it's 0, we don't have long mode support
 	ret
 
 setup_pagetables:
-	mov 0x1000, 0x2003 # point to the PDPT with flags
-	mov 0x2000, 0x3003 # Move up 4 KB
-	mov 0x3000, 0x4003 # We have now set up the page table, we need to fill it up
+	movl $0x2003, 0x1000 # point to the PDPT with flags
+	movl $0x3003, 0x2000 # Move up 4 KB
+	movl $0x4003, 0x3000 # We have now set up the page table, we need to fill it up
 
-	mov ecx, 0 # Set up the counter
+	mov 0, %ecx # Set up the counter
 	# Creating the identity map
 	idmap:
-		mov eax, 4096 # move the page size to the EAX register
-		mul ecx
-		or eax, 10000011b
-		mov [0x3000 + ecx * 8], eax
-		inc ecx
-		cmp ecx, 512
+		mov $4096, %eax # move the page size to the EAX register
+		mul %ecx
+		or %eax, 0x83
+		leal 0x3000(, %ecx, 8), %ebx
+		movl %eax, (%ebx)
+		inc %ecx
+		cmp %ecx, 512
 		jne idmap
 	
 	ret
 
 enable_pae_paging:
-	mov eax, 0x1000 # Address of the PML4T
-	mov cr3, eax # Move this address to the control register 3
+	mov %eax, 0x1000 # Address of the PML4T
+	mov %cr3, %eax # Move this address to the control register 3
 	# Now the cr3 register knows where our PML4T is
 
 	enter_long_mode:
-		mov ecx, 0xC0000080 # Move model specific register into ECX
+		mov %ecx, 0xC0000080 # Move model specific register into ECX
 		rdmsr # Write the register value into EAX
-		or eax, 1 << 8 # Set 8th bit, which is responsible for enabling long mode when we enable paging
+		or %eax, 1 << 8 # Set 8th bit, which is responsible for enabling long mode when we enable paging
 		wrmsr # Write to the model specific register
 	
 	enable_paging:
-		mov eax, cr0
-		or eax, 1 << 31 # Flipping the oldest bit in control register 0
-		mov cr0, eax
+		mov %eax, %cr0
+		or %eax, 1 << 31 # Flipping the oldest bit in control register 0
+		mov %cr0, %eax
 	
 	# Paging is now enabled !!!!!!!!! :D
 	ret
 
-# 64 bit Global descriptor table
-section .rodata
-gdt64:
-    dq 0
-.code_segment: equ $ - gdt64
-    dq (1 << 43) | (1 <<44) | (1 << 47) | (1 << 53)
-
-.pointer:
-    dw $ - gdt64 - 1
-    dq gdt64
-
 .nocpuid:
-	mv al, "C"
+	mov %al, 'C'
 	jmp error
 
 .noextfunc:
-	mv al, "E"
+	mov %al, 'E'
 	jmp error
 
 .nolongmode:
-	mv al, "L"
+	mov %al, 'L'
 	jmp error
 
 error:
-    mov dword [0xb8000], 0x4f524f45
-    mov dword [0xb8004], 0x4f3a4f52
-    mov dword [0xb8008], 0x4f204f20
-    mov byte [0xb800a], al
+    movl $0x4f524f45, 0xb8000
+    movl $0x4f3a4f52, 0xb8004
+    movl $0x4f204f20, 0xb8008
+    movb %al, 0xb800a
     hlt
 
-# Describe the GDT for long mode
-section .rodata
+# 64 bit Global descriptor table
+.section .rodata
 gdt64:
-    dq 0
-.code_segment: equ $ - gdt64
-    dq (1 << 43) | (1 <<44) | (1 << 47) | (1 << 53)
+    .quad 0
+.equ code_segment, (.-gdt64)
+    .quad (1 << 43) | (1 <<44) | (1 << 47) | (1 << 53)
 
 .pointer:
-    dw $ - gdt64 - 1
-    dq gdt64
+    .word $ - gdt64 - 1
+    .quad gdt64
