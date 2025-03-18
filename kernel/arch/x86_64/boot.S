@@ -133,14 +133,3 @@ error:
     movl $0x4f204f20, 0xb8008
     movb %al, 0xb800a
     hlt
-
-# 64 bit Global descriptor table
-.section .rodata
-gdt64:
-    .quad 0
-.equ code_segment, (.-gdt64)
-    .quad (1 << 43) | (1 <<44) | (1 << 47) | (1 << 53)
-
-.pointer:
-    .word $ - gdt64 - 1
-    .quad gdt64
