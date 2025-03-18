@@ -32,6 +32,16 @@ _start:
 	# Lets check for cpuid
 	call checkcpuid
 
+	# Lets check for extended functionality
+	call checkextfunc
+
+	# Now, lets set up page tables
+	call setup_pagetables
+
+	# Now, we can enable paging
+	call enable_pae_paging
+
+
 	# Transfer control to the main kernel.
 	call kernel_main
 
@@ -68,6 +78,55 @@ checkextfunc:
 	cpuid # This will now store various CPU information into different registers
 	test edx, 1 << 29 # Checking the 30th youngest bit of the EDX register to see if we have long mode support
 	jz .nolongmode # If it's 0, we don't have long mode support
+	ret
+
+setup_pagetables:
+	mov 0x1000, 0x2003 # point to the PDPT with flags
+	mov 0x2000, 0x3003 # Move up 4 KB
+	mov 0x3000, 0x4003 # We have now set up the page table, we need to fill it up
+
+	mov ecx, 0 # Set up the counter
+	# Creating the identity map
+	idmap:
+		mov eax, 4096 # move the page size to the EAX register
+		mul ecx
+		or eax, 10000011b
+		mov [0x3000 + ecx * 8], eax
+		inc ecx
+		cmp ecx, 512
+		jne idmap
+	
+	ret
+
+enable_pae_paging:
+	mov eax, 0x1000 # Address of the PML4T
+	mov cr3, eax # Move this address to the control register 3
+	# Now the cr3 register knows where our PML4T is
+
+	enter_long_mode:
+		mov ecx, 0xC0000080 # Move model specific register into ECX
+		rdmsr # Write the register value into EAX
+		or eax, 1 << 8 # Set 8th bit, which is responsible for enabling long mode when we enable paging
+		wrmsr # Write to the model specific register
+	
+	enable_paging:
+		mov eax, cr0
+		or eax, 1 << 31 # Flipping the oldest bit in control register 0
+		mov cr0, eax
+	
+	# Paging is now enabled !!!!!!!!! :D
+	ret
+
+# 64 bit Global descriptor table
+section .rodata
+gdt64:
+    dq 0
+.code_segment: equ $ - gdt64
+    dq (1 << 43) | (1 <<44) | (1 << 47) | (1 << 53)
+
+.pointer:
+    dw $ - gdt64 - 1
+    dq gdt64
 
 .nocpuid:
 	mv al, "C"
