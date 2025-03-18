@@ -80,7 +80,7 @@ Size of the frame is the same as the size of the page.
 
 Page frame allocator. 
 
-Paging allows you to do somethings an extra layer of abstraction lets you do
+Paging allows you to do some things an extra layer of abstraction lets you do
 4 bytes of data - standard size of a page
 
 We have two processes P1 and P2 that we want to access with data
@@ -88,3 +88,125 @@ We have two processes P1 and P2 that we want to access with data
 So lets say the 4 KB is somewhere physically in RAM. The two processes can access RAM through this page?? The actual frames in memory are different. Allows for an extra layer of security through abstraction.
 
 Some part of the disk is dedicated to storing pages. So pages can also be found in the disk. 
+
+Identity mapping. all virtual addresses will be mapped 1 : 1 to physical address. It still doesn't tell us where it is in physical memory, but can still access it in some way
+
+In our kernel, we're gonna have an address translator that will tell us where it is in physical memory. 
+Identity mapping, the virtual address will be the same as the physical address.
+
+Frame buffer is some part of the RAM that can tell the GPU how to draw something. Most virtual machines put the frame buffer at the address 0xFB000000, where FB stands for frame buffer
+
+Usually the physical address can change, but you want the virtual address of the frame buffer to always be the same.
+
+1-level paging
+Have a page table. A page table is supposed to be a structure that contains different virtual addresses of the pages. 
+
+2-level paging
+Page directory table they are a collection of related pages. Used for managing virtual memory. Points to different page tables. All these tables are usually 4 KB
+
+3-level paging
+Page directory pointer table. Table of pointers to the page directory tables. 
+
+4-level paging
+Allows for addressing 256 TB of virtual memory. Page map level 4 table. points to page directory pointer tables.
+
+4 level linear paging. Doesn't differ that much from one level paging. 
+
+PML4T -> PDPT -> PDT -> PT
+
+Fundamentally, we only have 1 PT. But we can eventually add more page tables. (PAE paging). Each of these tables take up 4 KB.
+
+PML4T first entry is a pointer to PDPT. Let's put it at 0x1000. The first 4 KB are considered reserved.
+
+PML4T - 0x1000
+PML4T[0] -> PDPT
+Present flag should be 1, next is read/write flag which has to be 1. Supervisor/ user flag has to be 0 because it has very high permissions -> 011. Right now we don't need to worry about this because we will be executing in supervisor mode(monitor mode)
+
+MOV 0x1000, 0x2003 --> We are pointing to the PDPT with the flags
+PDPT - 0x2000
+PDPT[0] -> PDT --> We now want the first pointer of the PDPT to point to PDT
+MOV 0x2000, 0x3003 --> Move up 4 KB
+PDT - 0x3000
+PDT[0] -> PT
+MOV 0x3000, 0x4003
+PT- 0x4000
+
+Now, we just need to fill up our page table. Page table, like all other tables is 4KB
+
+We will now fill up this page table with different virtual addresses. 
+
+PT is split into 8 byte chunks. These will store our 32-bit physical address and therefore, that's how we do the mapping.
+We now fill these with the next physical addresses that we want. 
+
+x86 page sizes:
+- 4KiB (standard size)
+- 2MiB
+- 1GiB
+
+PAE paging
+Physical address extension. 32-bit physical address = 4GB of memory. This might not be sufficient for users. PAE paging lets us go over this mark. In PAE paging, entries are 8 bytes.
+
+We want to execute this procedure 512 times. The whole page table is 4KB, 1 entry is 8 bytes, so in total 512 times
+MOV ECX, 0
+IDMAP:
+    MOV EAX, 4096 -> Move the page size(4096) to the EAX register. This is how the identity map algo works
+    MUL ECX --> address of first page will be 0!
+    OR EAX, 10000011b --> The 011 are the flags so we are adding the flags.
+    MOV [0x3000+ECX*8], EAX --> Moving it into our page table
+    INC ECX
+    CMP ECX, 512
+    JNE IDMAP
+
+This is a very simple algo to create an identity map
+
+MOV EAX, 0x1000
+MOV CR3, EAX
+
+Now the CR3 register knows where PML4T is
+Now we can enable the bit that tells the CPU that when paging is enabled, it's PAE paging. 6th youngest bit of CR4 control register 4.
+
+MOV EAX, CR4
+OR EAX, 1 << 5 --> Setting 5th bit
+MOV CR4, EAX
+
+Now we need to enter long mode!
+Register that contains the info about the long mode bit is in model-specific register
+
+RDMSR - Read model specific register
+WRMSR - Write model specific register
+
+ECX register contains the id of the model specific register we want to access
+EAX contains content
+
+MOV ECX, 0xC0000080 -> This is the model specific register, so let's put this into ECX
+RDMSR -> This will now write the register into EAX
+OR EAX, 1 << 8 --> 9th youngest bit is responsible for enabling long mode when we enable paging
+WRMSR --> Write model specific register!
+
+Now we told the CPU we want PAE paging and long mode
+
+Now, let's enable paging itself
+Flip oldest bit in control register 0 CR0
+MOV EAX, CR0
+OR EAX, 1 << 31
+MOV CR0, EAX
+
+Paging is now enabled! Still in compatibility mode. Cannot use 64bit instructions yet
+
+Edit the GDT (Global descriptor table)
+
+We need to modify it because we had a granularity, size, long mode bit, Reserved bit, Limit(4 bits)
+
+Size was set to 1 because we wanted 32 bit protected mode. Long mode was 0. Size needs to now be 0, and long mode bit has to be 1.
+
+MOV [CODEDESCRIPTOR + 5], BYTE 10101111b
+MOV [DATADESCRIPTOR + 5], BYTE 10101111b
+
+JMP 8:LM
+
+[bits 64]
+
+LM:
+    JMP LM
+
+Now we're in long mode
