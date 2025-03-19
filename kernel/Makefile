@@ -15,7 +15,7 @@ INCLUDEDIR?=$(PREFIX)/include
 
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
-LDFLAGS:=$(LDFLAGS)
+LDFLAGS:=$(LDFLAGS) 
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
 ARCHDIR=arch/$(HOSTARCH)
@@ -38,11 +38,14 @@ $(KERNEL_OBJS) \
 $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o \
 
+OBJ64=$(KERNEL_ARCH_OBJS_64)
+
 LINK_LIST=\
 $(LDFLAGS) \
 $(ARCHDIR)/crti.o \
 $(ARCHDIR)/crtbegin.o \
 $(KERNEL_OBJS) \
+$(OBJ64) \
 $(LIBS) \
 $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o \
@@ -52,7 +55,7 @@ $(ARCHDIR)/crtn.o \
 
 all: adios.kernel
 
-adios.kernel: $(OBJS) $(ARCHDIR)/linker.ld
+adios.kernel: $(OBJS) $(ARCHDIR)/linker.ld $(OBJ64)
 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 	grub-file --is-x86-multiboot adios.kernel
 
@@ -63,7 +66,8 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
 
 .S.o:
-	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS) $(if $(findstring $(basename $@),$(OBJS)),-m32)
+	# $(OBJCOPY) -O elf64-x86-64 -I $(if $(findstring $(basename $@),$(OBJS)),elf32-i386,elf64-x86-64) $@ $@
 
 clean:
 	rm -f adios.kernel

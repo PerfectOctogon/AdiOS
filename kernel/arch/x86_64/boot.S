@@ -11,7 +11,7 @@
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
-
+.code32
 # Reserve a stack for the initial thread.
 .section .bss
 .align 16
@@ -24,12 +24,12 @@ stack_top:
 .global _start
 .type _start, @function
 .extern long_mode_start
+.extern _init
 _start:
 	movl $stack_top, %esp
-
+	
 	# Call the global constructors.
 	call _init
-
 	# Lets check for cpuid
 	call checkcpuid
 
@@ -42,8 +42,7 @@ _start:
 	# Now, we can enable paging
 	call enable_pae_paging
 
-	lgdt [gdt64.pointer] # Load the global descriptor table
-    ljmp $gdt64.code_segment, $long_mode_start # Now, we can move to long mode code :3
+	jmp long_mode_start
 
 	hlt
 .size _start, . - _start
