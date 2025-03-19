@@ -66,7 +66,7 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
 
 .S.o:
-	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS) $(if $(findstring $(basename $@),$(OBJS)),-m32)
+	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS) # $(if $(findstring $(basename $@),$(OBJS)),-m32)
 	# $(OBJCOPY) -O elf64-x86-64 -I $(if $(findstring $(basename $@),$(OBJS)),elf32-i386,elf64-x86-64) $@ $@
 
 clean:

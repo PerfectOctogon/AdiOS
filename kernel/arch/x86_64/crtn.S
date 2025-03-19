@@ -1,3 +1,4 @@
+.code32
 .section .init
 	/* gcc will nicely put the contents of crtend.o's .init section here. */
 	popl %ebp
