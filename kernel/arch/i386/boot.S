@@ -28,7 +28,7 @@ _start:
 
 	# Call the global constructors.
 	call _init
-
+	jmp .
 	call kernel_main
 
 	hlt

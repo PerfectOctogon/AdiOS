@@ -1,6 +1,6 @@
 .section .init
 .global _init
-.align 32
+.type _init, @function
 .code32
 _init:
 	push %ebp
