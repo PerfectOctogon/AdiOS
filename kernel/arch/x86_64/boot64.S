@@ -5,12 +5,13 @@
 .code64
 long_mode_start:
     # loading null into all data segment registers
-    movw %ax, 0
-    movw %ss, %ax
-    movw %ds, %ax
-    movw %es, %ax
-    movw %fs, %ax
-    movw %gs, %ax
+    movl $0x4f3a4f53, 0xb8004
+    movw $0, %ax
+    movw %ax, %ss
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
 
     # Lets now call the main kernel
     call kernel_main

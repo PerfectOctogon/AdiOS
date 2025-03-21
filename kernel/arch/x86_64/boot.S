@@ -41,9 +41,10 @@ _start:
 	# Now, we can enable paging
 	call enable_pae_paging
 
+	.code64
 	lgdt gdt_pointer
 
-	ljmp $code_segment, $long_mode_start
+	jmp long_mode_start
 	hlt
 .size _start, . - _start
 
@@ -81,20 +82,18 @@ setup_pagetables:
 	movl $0x2003, 0x1000 # point to the PDPT with flags
 	movl $0x3003, 0x2000 # Move up 4 KB
 	movl $0x4003, 0x3000 # We have now set up the page table, we need to fill it up
-	mov 0, %ecx # Set up the counter
+	xor %ecx, %ecx # Zero out ecx
 	# Creating the identity map
 	idmap:
 		mov $4096, %eax # move the page size to the EAX register
-		mul %ecx
-		or %eax, 0x83
+		mul %ecx # multiple current page index to eax. Beginning will be 0, of course. So, starting at index 0
+		movl %edx, %eax # Bruh, so apparently mul stores result into edx ;-;, we we're moving it into eax
+		or $0x83, %eax # Setting flags
 		movl %eax, 0x3000(,%ecx,8)
-		movl (%ebx), %eax
 		inc %ecx
-		cmp %ecx, 512
+		cmp $0x200, %ecx
 		jne idmap
-	
 	ret
-
 enable_pae_paging:
 	mov $0x1000, %eax # Address of the PML4T
 	mov %eax, %cr3 # Move this address to the control register 3
