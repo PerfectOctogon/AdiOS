@@ -40,11 +40,13 @@ _start:
 
 	# Now, we can enable paging
 	call enable_pae_paging
-
+	
 	.code64
-	lgdt gdt_pointer
-
-	jmp long_mode_start
+	load_gdt:
+	lgdt .pointer
+	movabsq $long_mode_start, %rax
+	// movabs
+	call *%rax
 	hlt
 .size _start, . - _start
 
@@ -79,12 +81,17 @@ checkextfunc:
 	ret
 
 setup_pagetables:
+	# Temporarily disable paging
+	mov %cr0, %eax
+	and $~(1 << 31), %eax # Reset the oldest bit in control register 0
+	mov %eax, %cr0
+
 	movl $0x2003, 0x1000 # point to the PDPT with flags
 	movl $0x3003, 0x2000 # Move up 4 KB
 	movl $0x4003, 0x3000 # We have now set up the page table, we need to fill it up
 	xor %ecx, %ecx # Zero out ecx
 	# Creating the identity map
-	idmap:
+	.idmap:
 		mov $4096, %eax # move the page size to the EAX register
 		mul %ecx # multiple current page index to eax. Beginning will be 0, of course. So, starting at index 0
 		movl %edx, %eax # Bruh, so apparently mul stores result into edx ;-;, we we're moving it into eax
@@ -92,36 +99,41 @@ setup_pagetables:
 		movl %eax, 0x3000(,%ecx,8)
 		inc %ecx
 		cmp $0x200, %ecx
-		jne idmap
+		jne .idmap
 	ret
 enable_pae_paging:
 	mov $0x1000, %eax # Address of the PML4T
 	mov %eax, %cr3 # Move this address to the control register 3
+
+	mov %cr4, %eax # Enable PAE paging
+	or $(1 << 5), %eax
+	mov %eax, %cr4
+
 	# Now the cr3 register knows where our PML4T is
-	enter_long_mode:
+	.enter_long_mode:
 		mov $0xC0000080, %ecx # Move model specific register into ECX
 		rdmsr # Write the register value into EAX
 		or $(1 << 8), %eax # Set 8th bit, which is responsible for enabling long mode when we enable paging
 		wrmsr # Write to the model specific register
 	
-	enable_paging:
+	.enable_paging:
 		mov %cr0, %eax
 		or $(1 << 31), %eax # Flipping the oldest bit in control register 0
-		mov %eax, %cr0
+		mov %eax, %cr0 # TO:DO PAGING NOT WORKING!!! CANNOT WRITE TO CR0
 	
 	# Paging is now enabled !!!!!!!!! :D
-	ret
+	jmp load_gdt
 
 .nocpuid:
-	movb 'C', %al
+	movb $'C', %al
 	jmp error
 
 .noextfunc:
-	movb 'E', %al
+	movb $'E', %al
 	jmp error
 
 .nolongmode:
-	movb 'L', %al
+	movb $'L', %al
 	jmp error
 
 error:
@@ -131,7 +143,6 @@ error:
     mov %al, 0xb800a
     hlt
 
-.code64
 # 64-bit Global Descriptor Table
 .section .rodata
 gdt64:
@@ -145,7 +156,7 @@ gdt64:
     .equ data_segment, . - gdt64
     .quad (1 << 44) | (1 << 47) | (1 << 41)
 
-gdt_pointer:
+.pointer:
     .word gdt64_end - gdt64 - 1
     .quad gdt64
 

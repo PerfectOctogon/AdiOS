@@ -22,13 +22,14 @@ static uint16_t* terminal_buffer;
 
 // Initialize the terminal
 void terminal_initialize(void){
+    while(1);
     terminal_row = 0;
     terminal_column = 0;
+    
     // Terminal color is set to light green on black, can change this any time
     terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
     // Start pointing to the beginning of VGA memory
     terminal_buffer = VGA_MEMORY;
-
     //Go over and set all the characters in the buffer to spaces
     for(size_t y = 0; y < VGA_HEIGHT; y++){
         for(size_t x = 0; x < VGA_WIDTH; x++){
@@ -36,6 +37,7 @@ void terminal_initialize(void){
             terminal_buffer[index] = vga_entry(' ', terminal_color);
         }
     }
+    return;
 }
 
 // Change the color of the terminal
