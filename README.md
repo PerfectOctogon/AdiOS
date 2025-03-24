@@ -14,7 +14,7 @@ I have also included some personal notes I took when studying inside a directory
 # Purpose
 I am getting interested in cyber security and related fields so I thought : what better way is there to learn about securing systems than creating your own operating system? This is also a project aimed to better my understanding about the fundamental structure of an OS. I aim to learn about system calls, interrupts and many more things that a typical OS handles / provides abstraction for. Hopefully, I come out of this project with an OS that contains the following : 
 
-    - Basic IO (Keyboard support, with potentially even mouse!)
+    - Basic IO (Keyboard support, with potentially even mouse!) <-- Current status :)
     - OS file structure (directories, text files)
     - Running commands (ls, cd etc...)
     - Ability to execute programs (memory management), which I believe would be the most challenging task
