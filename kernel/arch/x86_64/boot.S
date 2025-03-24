@@ -33,27 +33,20 @@ _start:
 	# Now, lets set up page tables
 	call setup_pagetables
 
+	# Enable SSE
+	call set_sse
+
 	# Now, we can enable paging
 	jmp enable_pae_paging
 	
 	load_gdt:
 	mov $(null_gdtr), %eax
     lgdt (%eax)
-
-	//xchg %bx, %bx
 	
-    ljmp $0x08, $long_mode_start
+    ljmp $0x08, $long_mode_start # Long jump into the 64-bit kernel
 
-	// sgdt gdtr_dump
-	// lgdt .pointer
-	// sgdt gdtr_dump
-	// .code64
-	// movabsq $long_mode_start, %rax
-	// // // movabs
-	// jmp *%rax
 
 	.code64
-	// jmp $.code_segment, $long_mode_start
 	.align 8
 	null_gdtr:
 		.word null_gdt_end - null_gdt_base
@@ -134,25 +127,8 @@ setup_pagetables:
 		incl %ecx                    # Increment ECX
 		cmpl $512, %ecx              # Check if whole table is mapped
 		jne .loop                    # If not, continue loop
-
-		ret
-
-
-	// movl $0x2003, 0x1000 # point to the PDPT with flags
-	// movl $0x3003, 0x2000 # Move up 4 KB
-	// movl $0x4003, 0x3000 # We have now set up the page table, we need to fill it up
-	// xor %ecx, %ecx # Zero out ecx
-	// # Creating the identity map
-	// .idmap:
-	// 	mov $4096, %eax # move the page size to the EAX register
-	// 	mul %ecx # multiple current page index to eax. Beginning will be 0, of course. So, starting at index 0
-	// 	movl %edx, %eax # Bruh, so apparently mul stores result into edx ;-;, we we're moving it into eax
-	// 	or $0x83, %eax # Setting flags
-	// 	movl %eax, 0x3000(,%ecx,8)
-	// 	inc %ecx
-	// 	cmp $0x200, %ecx
-	// 	jne .idmap
 	ret
+
 enable_pae_paging:
 	mov $pml4t, %eax # Address of the PML4T
 	mov %eax, %cr3 # Move this address to the control register 3
@@ -173,10 +149,17 @@ enable_pae_paging:
 		or $(1 << 31), %eax # Flipping the oldest bit in control register 0
 		mov %eax, %cr0
 	
-	// movl $0xb8000, %eax
-	// movl $0x4f524f45, (%eax)
 	# Paging is now enabled !!!!!!!!! :D
-	jmp load_gdt # Far jump to reload the CS --> This long jump is messing stuff up >:(
+	jmp load_gdt
+
+set_sse:
+	mov %cr0, %eax
+	and $0xfffb, %ax # Clear coprocessor emulation CR).EM
+	or $0x2, %ax # Set coprocessor monitoring CR0.MP
+	mov %eax, %cr0
+	or $(3 << 9), %ax # Set CR4.OSFXSR and CR$.OSXMMEXCPT at the same time
+	mov %eax, %cr4
+	ret
 
 .nocpuid:
 	movb $'C', %al
