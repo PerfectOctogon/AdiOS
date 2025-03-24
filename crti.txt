@@ -1,0 +1,242 @@
+
+kernel/arch/x86_64/crti.o:     file format elf32-i386
+
+
+Disassembly of section .init:
+
+00000000 <_init>:
+.section .init
+.global _init
+.align 32
+_init:
+	push %ebp
+   0:	55                   	push   %ebp
+	movl %esp, %ebp
+   1:	89 e5                	mov    %esp,%ebp
+
+Disassembly of section .fini:
+
+00000000 <_fini>:
+
+.section .fini
+.global _fini
+.type _fini, @function
+_fini:
+	push %ebp
+   0:	55                   	push   %ebp
+	movl %esp, %ebp
+   1:	89 e5                	mov    %esp,%ebp
+
+Disassembly of section .note.gnu.property:
+
+00000000 <.note.gnu.property>:
+   0:	04 00                	add    $0x0,%al
+   2:	00 00                	add    %al,(%eax)
+   4:	18 00                	sbb    %al,(%eax)
+   6:	00 00                	add    %al,(%eax)
+   8:	05 00 00 00 47       	add    $0x47000000,%eax
+   d:	4e                   	dec    %esi
+   e:	55                   	push   %ebp
+   f:	00 02                	add    %al,(%edx)
+  11:	00 01                	add    %al,(%ecx)
+  13:	c0 04 00 00          	rolb   $0x0,(%eax,%eax,1)
+  17:	00 00                	add    %al,(%eax)
+  19:	00 00                	add    %al,(%eax)
+  1b:	00 01                	add    %al,(%ecx)
+  1d:	00 01                	add    %al,(%ecx)
+  1f:	c0 04 00 00          	rolb   $0x0,(%eax,%eax,1)
+  23:	00 01                	add    %al,(%ecx)
+  25:	00 00                	add    %al,(%eax)
+	...
+
+Disassembly of section .debug_line:
+
+00000000 <.debug_line>:
+	push %ebp
+   0:	54                   	push   %esp
+	movl %esp, %ebp
+   1:	00 00                	add    %al,(%eax)
+	push %ebp
+   3:	00 05 00 04 00 2e    	add    %al,0x2e000400
+   9:	00 00                	add    %al,(%eax)
+   b:	00 01                	add    %al,(%ecx)
+   d:	01 01                	add    %eax,(%ecx)
+   f:	fb                   	sti
+  10:	0e                   	push   %cs
+  11:	0d 00 01 01 01       	or     $0x1010100,%eax
+  16:	01 00                	add    %eax,(%eax)
+  18:	00 00                	add    %al,(%eax)
+  1a:	01 00                	add    %eax,(%eax)
+  1c:	00 01                	add    %al,(%ecx)
+  1e:	01 01                	add    %eax,(%ecx)
+  20:	1f                   	pop    %ds
+  21:	02 00                	add    (%eax),%al
+  23:	00 00                	add    %al,(%eax)
+  25:	00 2b                	add    %ch,(%ebx)
+  27:	00 00                	add    %al,(%eax)
+  29:	00 02                	add    %al,(%edx)
+  2b:	01 1f                	add    %ebx,(%edi)
+  2d:	02 0f                	add    (%edi),%cl
+  2f:	02 37                	add    (%edi),%dh
+  31:	00 00                	add    %al,(%eax)
+  33:	00 01                	add    %al,(%ecx)
+  35:	37                   	aaa
+  36:	00 00                	add    %al,(%eax)
+  38:	00 01                	add    %al,(%ecx)
+  3a:	00 05 02 00 00 00    	add    %al,0x2
+  40:	00 16                	add    %dl,(%esi)
+  42:	21 02                	and    %eax,(%edx)
+  44:	02 00                	add    (%eax),%al
+  46:	01 01                	add    %eax,(%ecx)
+  48:	00 05 02 00 00 00    	add    %al,0x2
+  4e:	00 03                	add    %al,(%ebx)
+  50:	0c 01                	or     $0x1,%al
+  52:	21 02                	and    %eax,(%edx)
+  54:	02 00                	add    (%eax),%al
+  56:	01 01                	add    %eax,(%ecx)
+
+Disassembly of section .debug_line_str:
+
+00000000 <.debug_line_str>:
+	push %ebp
+   0:	2f                   	das
+	movl %esp, %ebp
+   1:	68 6f 6d 65 2f       	push   $0x2f656d6f
+   6:	61                   	popa
+   7:	64 69 74 68 79 61 2f 	imul   $0x6f442f61,%fs:0x79(%eax,%ebp,2),%esi
+   e:	44 6f 
+  10:	63 75 6d             	arpl   %si,0x6d(%ebp)
+  13:	65 6e                	outsb  %gs:(%esi),(%dx)
+  15:	74 73                	je     8a <_fini+0x8a>
+  17:	2f                   	das
+  18:	41                   	inc    %ecx
+  19:	64 69 4f 53 2f 41 64 	imul   $0x6964412f,%fs:0x53(%edi),%ecx
+  20:	69 
+  21:	4f                   	dec    %edi
+  22:	53                   	push   %ebx
+  23:	2f                   	das
+  24:	6b 65 72 6e          	imul   $0x6e,0x72(%ebp),%esp
+  28:	65 6c                	gs insb (%dx),%es:(%edi)
+  2a:	00 61 72             	add    %ah,0x72(%ecx)
+  2d:	63 68 2f             	arpl   %bp,0x2f(%eax)
+  30:	78 38                	js     6a <_fini+0x6a>
+  32:	36 5f                	ss pop %edi
+  34:	36 34 00             	ss xor $0x0,%al
+  37:	63 72 74             	arpl   %si,0x74(%edx)
+  3a:	69                   	.byte 0x69
+  3b:	2e 53                	cs push %ebx
+	...
+
+Disassembly of section .debug_info:
+
+00000000 <.debug_info>:
+	push %ebp
+   0:	1f                   	pop    %ds
+	movl %esp, %ebp
+   1:	00 00                	add    %al,(%eax)
+	push %ebp
+   3:	00 05 00 01 04 00    	add    %al,0x40100
+   9:	00 00                	add    %al,(%eax)
+   b:	00 01                	add    %al,(%ecx)
+   d:	00 00                	add    %al,(%eax)
+   f:	00 00                	add    %al,(%eax)
+  11:	0c 00                	or     $0x0,%al
+  13:	00 00                	add    %al,(%eax)
+  15:	00 00                	add    %al,(%eax)
+  17:	00 00                	add    %al,(%eax)
+  19:	13 00                	adc    (%eax),%eax
+  1b:	00 00                	add    %al,(%eax)
+  1d:	3e 00 00             	add    %al,%ds:(%eax)
+  20:	00 01                	add    %al,(%ecx)
+  22:	80                   	.byte 0x80
+
+Disassembly of section .debug_abbrev:
+
+00000000 <.debug_abbrev>:
+	push %ebp
+   0:	01 11                	add    %edx,(%ecx)
+	movl %esp, %ebp
+   2:	00 10                	add    %dl,(%eax)
+	movl %esp, %ebp
+   4:	17                   	pop    %ss
+   5:	55                   	push   %ebp
+   6:	17                   	pop    %ss
+   7:	03 0e                	add    (%esi),%ecx
+   9:	1b 0e                	sbb    (%esi),%ecx
+   b:	25 0e 13 05 00       	and    $0x5130e,%eax
+	...
+
+Disassembly of section .debug_aranges:
+
+00000000 <.debug_aranges>:
+	push %ebp
+   0:	24 00                	and    $0x0,%al
+	movl %esp, %ebp
+   2:	00 00                	add    %al,(%eax)
+	movl %esp, %ebp
+   4:	02 00                	add    (%eax),%al
+   6:	00 00                	add    %al,(%eax)
+   8:	00 00                	add    %al,(%eax)
+   a:	04 00                	add    $0x0,%al
+	...
+  14:	03 00                	add    (%eax),%eax
+  16:	00 00                	add    %al,(%eax)
+  18:	00 00                	add    %al,(%eax)
+  1a:	00 00                	add    %al,(%eax)
+  1c:	03 00                	add    (%eax),%eax
+	...
+
+Disassembly of section .debug_str:
+
+00000000 <.debug_str>:
+	push %ebp
+   0:	61                   	popa
+	movl %esp, %ebp
+   1:	72 63                	jb     66 <_fini+0x66>
+	push %ebp
+   3:	68 2f 78 38 36       	push   $0x3638782f
+   8:	5f                   	pop    %edi
+   9:	36 34 2f             	ss xor $0x2f,%al
+   c:	63 72 74             	arpl   %si,0x74(%edx)
+   f:	69 2e 53 00 2f 68    	imul   $0x682f0053,(%esi),%ebp
+  15:	6f                   	outsl  %ds:(%esi),(%dx)
+  16:	6d                   	insl   (%dx),%es:(%edi)
+  17:	65 2f                	gs das
+  19:	61                   	popa
+  1a:	64 69 74 68 79 61 2f 	imul   $0x6f442f61,%fs:0x79(%eax,%ebp,2),%esi
+  21:	44 6f 
+  23:	63 75 6d             	arpl   %si,0x6d(%ebp)
+  26:	65 6e                	outsb  %gs:(%esi),(%dx)
+  28:	74 73                	je     9d <_fini+0x9d>
+  2a:	2f                   	das
+  2b:	41                   	inc    %ecx
+  2c:	64 69 4f 53 2f 41 64 	imul   $0x6964412f,%fs:0x53(%edi),%ecx
+  33:	69 
+  34:	4f                   	dec    %edi
+  35:	53                   	push   %ebx
+  36:	2f                   	das
+  37:	6b 65 72 6e          	imul   $0x6e,0x72(%ebp),%esp
+  3b:	65 6c                	gs insb (%dx),%es:(%edi)
+  3d:	00 47 4e             	add    %al,0x4e(%edi)
+  40:	55                   	push   %ebp
+  41:	20 41 53             	and    %al,0x53(%ecx)
+  44:	20 32                	and    %dh,(%edx)
+  46:	2e 34 34             	cs xor $0x34,%al
+	...
+
+Disassembly of section .debug_rnglists:
+
+00000000 <.debug_rnglists>:
+	push %ebp
+   0:	15 00 00 00 05       	adc    $0x5000000,%eax
+	movl %esp, %ebp
+   5:	00 04 00             	add    %al,(%eax,%eax,1)
+   8:	00 00                	add    %al,(%eax)
+   a:	00 00                	add    %al,(%eax)
+   c:	07                   	pop    %es
+   d:	00 00                	add    %al,(%eax)
+   f:	00 00                	add    %al,(%eax)
+  11:	03 07                	add    (%edi),%eax
+  13:	00 00                	add    %al,(%eax)
+  15:	00 00                	add    %al,(%eax)
+  17:	03 00                	add    (%eax),%eax
