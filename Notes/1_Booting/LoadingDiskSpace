@@ -1,0 +1,111 @@
+Communicating with the BIOS
+
+Interrupts - signals sent to the CPU through an external bus that have a code. They tell the CPU to stop what it is doing and handle something external. Once it's done handling it, it can go back to what it was doing.
+
+System calls - Signal from userspace to kernel. Can be handled with Interrupts
+
+UNIX-like systems, the first 4 system calls are assigned:
+0x00 - Read
+0x01 - Write
+0x02 - Open
+0x03 - Close
+
+Communicating with the virtual file system
+
+CPU has a seperate chip for handling interrupts. Common chip is the 8259 PIC (Programmable interrupt controller). We can re-program this so our OS can handle interrupts. 
+When an interrupt occurs, the PIC sends the interrupt to the BIOS. We can communicate with the BIOS by sending interrupts. BIOS can communicate with us by sending back to the CPU 16 bit instruction codes.
+It gives us ready to use services in real-mode.
+
+What can we send to the BIOS
+- Interrupt code
+- Setting different registers and sending interrupt so the BIOS can read those registers
+
+In practice
+
+BIOS instruction vectors - lists of different instructions
+
+1 instruction vector has different instruction pertaining to one topic. eg Hexadecimal instruction vector 0x10 (16 in decimal). BIOS indexes at 0, so this actually is the 17th instruction vector.
+It handles instruction pertaining to VGA (graphical stuff)
+Disk instructions are in instruction vector 0x13 (Can be used to load more disk space)
+
+For example, 0x10 - VGA instruction vector
+Instructions:
+0x00
+0x01
+0x02
+...
+0x0E - 15th instruction of the 17th instruction vector. Displays a character in VGA 80 x 25 video mode. Params : character, foreground, background color
+
+Intrrupt code is the instruction vector. INT instruction - INT 0x10 can call this interrupt vector. How do we know which instruction in the instruction vector to call? Set up the AH register with whatever instruction to call:
+
+- MOV AH, 0x0E
+
+The registers the parameters need to be stored in varies.
+
+- MOV AL, 65 -- Sets lower register to 65 (A) or you can also do MOV AL, 'A'
+
+Now, calling an interrupt would print A into the screen.
+
+BIOS is your friend. But when you switch to 32 bit protected mode, the BIOS can't really do much anymore because it operates in 16 bits (real mode, 16 bit length instructions)
+
+Loading more disk space (interrupt 0x13)
+
+Hard drive structure and CHS format
+
+Components of a HDD
+It has a couple plates, inbetween them, there are heads (read/write heads). You can write to both sides of the plate. The plates rotate, the head can move. It can act as an EM, so when the plates are spinning, we can lower the head to write a specific bit to the space by switching the polarization of that region (flipping the bit). It can also read - detects the current polarization and gives that to other hardware. 
+
+A plate is split in regions. And we also have sectors. A plate is made out of small circular tracks. Lines going through these tracks. A sector is a section from these tracks and lines. A sector has 4096 different regions that can be detected for polarization. This means 4096 bits = 512 bytes. Thats why every sector contains 512 bytes.
+
+How do we know what sector we need - CHS format (Cylinder, Head, Sector)
+
+A cylinder is a collection of tracks stacked vertically across multiple plates. Each cylinder is indexed from 0. Since tracks are sequentially numbered, identifying the correct cylinder allows us to locate the general area where the data is stored. 
+
+Next, consider the read/write head. For example, a system with 3 plates will have 6 writable surfaces, meaning we can specify which head to use for accessing data.
+
+Finally within the selectedd track on a given surface, we must specify the sector, which represents the smallest addressable unit of storage on the disk. 
+
+By knowing the cylinder, head and sector, we can pinpoint the required data location on the disk 
+
+Sectors are indexed from 1.
+
+For every cylinder, there are 16 heads and for every head, there are 63 sectors.
+
+Another solution:
+LBA - Logical block addressing
+
+INST VECTOR 0x13 (interrupt code)
+
+Exact instruction : 0x02 - (AH register)
+
+Params : Amount of sectors we want to load (AL register) We might think we can only load 256 sectors because Al is an 8 bit register this is not the case
+
+Quick recap : Real mode addressing
+Real mode is a 16-bit CPU mode. But it actually uses 20-bit of the address bus.
+
+Seg:off (Segment offset) are 16 bit values each
+
+Real-mode addressing
+Actual address = 16 * segment + offset
+
+Multiplying by 16 means bit shifting to the left 4 times. In hex, we shift once because it's base 16(now we have 20 bits in 16 * seg). So when we add the offset, we get a 20-bit address
+
+ES register stores segment, BX stores offset
+
+ES is a very protected register. Because of that, we can't set ES directly. We need to move it into another register and then move that register into ES. ES register should NOT be touched. it keeps itself in the limit of the BX register. 
+
+Despite real mode using 20-bit addressing, most instructions will restrict you to 16-bit addressing. 
+
+Compute 2^16 = 65536
+
+Let's say we want to load 255 512 byte sectors, this value is greater than 2^16. The amount of sectors exceeds the amount of RAM that can be accessed by the instruction.
+
+So, we can at maximum, load 128 sectors or else it won't work!
+
+Next param = RAM address we want to load this. (Address of buffer) (ES:BX) set BX to 0x7E00 or 0x8000. 0x7E00 because 0x7C00 (Where we loaded our boot sector) + 512 bytes (length of boot sector.) It will load right after the boot sector. 0x8000 because GNU toolchain assumes software will be placed at that address. 
+
+Next param = CHS (CH, DH, CL) registers
+
+Next param = disk number (DL) register
+
+Upon boot, DL is set to disk number that the boot sector loads from

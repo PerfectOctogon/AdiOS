@@ -1,0 +1,172 @@
+A20 line
+
+In real mode, there is the 20-bit addressing system (segment, offset). Because of this, all of the program allocation was made with 20 bit address bit in mind.
+People considered 32 bit address line when 32-bit protected mode came along. But old software relied on the 20 bit address system, so to keep them compatible with new hardware, we have the A-20 line
+
+A in A20 stands for Address. Address line 20. Restrict the amount of the address bus that can be used to 20 bits. If you need more memory or 32 bit addressing, they can enable the A-20 line and have access to the rest of the lines.
+
+A20 line disabled by default. So we need to enable it so we can use more than 20 bits to address.
+
+There is a feature on most CPU's called Fast A20. It is a bit that can be flipped to enable the A20 line. 
+Port number is 0x92. 
+Read from this port,
+flip the A20 bit,
+write to this port.
+
+8 bit value stored in this port
+
+IN AL, 0x92 -- get value from port
+
+Second youngest bit to 1 will enable A20 line (Use bit operation)
+OR AL, 2
+
+Write to the port using the CPU's IO bus
+OUT 0x92 AL
+
+We've now enabled the A20 line
+
+Now, when we go into 32 bit protected mode, we can address more than 20 bits
+
+Global Descriptor Table (GDT)
+
+This table is accessible to us from anywhere in the operating system. Descriptor means that something that describe something. 
+Contains information about different segments in memory
+What is the base address - what is the beginning of something, what is the limit address - what is the end of something etc.
+
+Global descriptor table is a vital part of protected mode. It can be used to trigger the GPF (General protection faults)
+GPF's are caused when memory is not accessed the way it's supposed to be or if some code that shouldn't be executing is executing.
+
+eg: allows you to trigger GPF's in userspace
+
+What is it comprised of?
+
+- NULL descriptor
+- Code and data descriptors
+- Task state segment descriptor (TSSD) (optional for now)
+- GDTR - GDT register
+
+Null descriptor is 64 bits of 0's. Allows CPU to nullify descriptors and properly deal with GPF's
+
+Code descriptor is 8 bytes that explains the base, limit address etc. about the code (executable 1's and 0's). Code and data cannot be differentiated from data in a low level. Generally, data is also 1's and 0's. Fundamentally, they are the same thing, we as humans see them differently. For the CPU to know what is code and data, we need to load GDT with code and data descriptors
+
+TSSD are optional. Used for userspace multitasking. Multitasking - CPU can only execute 1 instruction at a time. When multiple tasks are running, CPU switches between these tasks really fast. Scheduler gives CPU time to different processes. It needs to make sure the task it left is in the same state when it comes back. So, we need a "context switch", where you store a state of the process. When it switches tasks, it saves the state the task's context in memory and it switches to another task for example. 
+
+GDTR specifies where the GDT is, how long is the GDT
+
+
+dq 0 - null descriptor (64 bits of 0)
+
+Code and data segment descriptor 
+- Base address : What is the earliest memory address you can find something at. Stored as a 32 bit value
+For our purposes, we can set it to 0. We can decide that code can be anywhere, and data can be anywhere: 0x00000000
+- Limit address : Maximum address. stored as a 20 bit value (relic of the address bus)
+Code can be anywhere, data can be anywhere: 0xFFFFF
+
+- Access
+A single byte, where every bit corresponds to an access param. 
+First bit : present bit. Present bit always has to be set to 1. Dictates if something is a valid segment.
+Second, Third bit : DPL(Desired priviledge level). Ring protection. Ring 0 is the max amount of permission. Also called kernel ring. Ring 3 contains very minimal protection. Ring 3 is usually the user space. Ring 1 and ring 2 are used for drivers. You can also run drivers on the kernel (monolithic kernel). Rings are formally referenced to as priviledge levels. CPL stands for current priviledge level. Ring 0 - 00, Ring 1 - 01 etc... Set DPL to 00
+Fourth bit: segment type. Dictates whether this is a TSS or not. If it is TSS, we set it to 0, if it is CSS, it is set to 1.
+Fifth bit : executable bit. Tells us whether segment is executable. Is this code or data descriptor?
+Sixth bit : direction / confirming bit : When in data descriptor, states whether data goes from bottom to top or top to bottom. Can be set to 0 - goes from top. If code descriptor confirms whether this code can be executed in priviledged level below the DPL specified. Doesn't really matter for confirming bit
+Seventh bit : read / write bit. For data descriptor, it's a writable bit (Can you write to this data). Sure, let's set this to 1. For code descriptors, we shouldn't be able to write to it. But can we read it? So yes, let's set it to 1
+Eighth bit : access bit : When CPU accesses a segment, it checks if it can access it successfully. If it can, it flips this bit to 1. It can safely assume that this is accessible. Can be set to 0, but CPU sometimes takes a little time to check so sometimes people just set it to 1 from the get go. Your choice to set it to whatever.
+
+We can have these bits set to something like : 1 00 1 0 0 1 1
+
+- Flags
+First bit : Granularity : Defines how the limit address should be treated. Ensuring we are not limited to 20-bit accessing. If we set this bit to 0, it will take limit address in the sense that 1 address corresponds to 1 byte in memory. If we set it to 1, it will take it in the sense of pages. It's a way to extend the limit address range to 32 bits. Standard page size : 4KB. Allows us to increase address range.
+Second bit : size bit : dictates if you want to go into 16 or 32 bit protected mode. 0 = 16 bit, 1 = 32 bit.
+Third bit : long mode bit : 64-bit long mode will be set to 0 initially when we're trying to get into protected mode. When long mode bit is set to 1, size bit has to be 0.
+Fourth bit : reserved bit : always will be 0. Doesn't represent anything. It's there for padding
+
+These are all the values you need to specify in a segment descriptor. Only thing left is to place this in the proper format.
+Proper format for the GDT segment descriptor :
+16 bit limit address | 24 bits base address | Access byte | 4 bit flags | 4 bit limit address | 8 bit base address
+
+A segment descriptor is 8 bytes.
+
+You can make labels, for example
+
+NULL DESCRIPTOR :
+    dq 0
+LIMIT ADDRESS:
+    dw 0xFFFF
+BASE ADDRESS:
+    There is no size definition for 3 bytes, so define a word and then a byte
+ACCESS BYTE:
+    db 10010011b
+FLAG LIMIT ADDRESS:
+    db 11001111b
+BASE ADDRESS:
+    db 0x00
+
+GDTR
+Specifies 2 things:
+- Size is a word(16-bit) the amount of bytes - 1
+We subtract 1 because it assumes we don't give an empty GDT. It maps 0 to 1.
+
+dw 23
+- Offset - 32 bit memory address that the GDT is placed at
+dd 0x7E00
+Alternatively, define null descriptor label dq 0
+And do dd NULL-DESCRIPTOR
+
+A label is just a memory address. So defining the null descriptor with a label gives us the memory address where that segment begins.
+
+Now, how can we make this GDT function. x86 CPU does all of this for us. The only thing you have to give it is dereferenced address of the GDTR.
+LGDT [GDTR] - Load global descriptor table by dereferencing the GDTR
+
+Define GDTR with a label
+GDTR
+    NULL DE:
+        dq 0
+    ...
+        dw 23
+    ...
+
+Before going into higher bit mode, make sure you disable interrupts. STI, CLI
+STI - Set interrupt flag (Sets interrupt flag to zero)
+CLI - Clear interrupt flag (resets interrupt flag to zero)
+
+So, perform the CLI instruction.
+
+Going into protected mode
+Control register 0 - CR0 : youngest bit is the protected mode bit. We cannot directly access it.
+First mov eax, CR0
+OR EAX, 1 - ensures bit is 1
+mov CR0, EAX
+
+Now we're in 32-bit protected mode!
+
+[16 BITS]
+....
+[32 BITS]
+Here, assembler knows to convert instructions to 32 bit format
+define a label
+
+MAIN32:
+    jmp $
+
+Segment : offset addressing. Now the offset is the address. Segment will describe which segment it will be accessed as. Segment we described in the GDT. Segment should be where you placed the code descriptor. For example, if you place it right after the null descriptor, segment will be 8.
+
+JMP 8:MAIN32
+
+Remember ES:BX for segment : offset. Now, the ES register will be used to specify the segment. 
+
+So, we need to set this ES register
+
+These are all segment registers
+DS
+ES
+FS
+GS
+SS
+MOV AX, 16
+MOV DS, AX
+...
+JMP MAIN32
+
+Cannot use BIOS anymore to display values for example.
+
+For now, the bootloader (GRUB) has set up a GDT for us. But when we switch over to 64-bit protected mode, we will have to define a new 64-bit GDT.
