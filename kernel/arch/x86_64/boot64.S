@@ -5,10 +5,13 @@
 .code64
 long_mode_start:
     # loading null into all data segment registers
-    # Lets now call the main kernel
-    // TO:DO Movq not executing properly
-    // movq $0xb8000, %rax
-    // movq $0x4f524f45, (%rax)
+    cli
+    mov $0x0010, %ax
+    mov %ax, %ss
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
 
     call kernel_main
     hlt

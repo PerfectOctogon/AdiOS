@@ -11,12 +11,7 @@
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
-# Reserve a stack for the initial thread.
-.section .bss
-.align 16
-stack_bottom:
-.skip 16384 # 16 KiB
-stack_top:
+
 
 # The kernel entry point.
 .section .text
@@ -39,14 +34,46 @@ _start:
 	call setup_pagetables
 
 	# Now, we can enable paging
-	call enable_pae_paging
+	jmp enable_pae_paging
 	
-	.code64
 	load_gdt:
-	lgdt .pointer
-	movabsq $long_mode_start, %rax
-	// movabs
-	call *%rax
+	mov $(null_gdtr), %eax
+    lgdt (%eax)
+
+	//xchg %bx, %bx
+	
+    ljmp $0x08, $long_mode_start
+
+	// sgdt gdtr_dump
+	// lgdt .pointer
+	// sgdt gdtr_dump
+	// .code64
+	// movabsq $long_mode_start, %rax
+	// // // movabs
+	// jmp *%rax
+
+	.code64
+	// jmp $.code_segment, $long_mode_start
+	.align 8
+	null_gdtr:
+		.word null_gdt_end - null_gdt_base
+		.quad null_gdt_base
+
+	null_gdt_base:
+		.quad 0
+		.word 0
+		.word 0
+		.byte 0
+		.byte 0x9a
+		.byte 0x20
+		.byte 0
+		.word 0xffff
+		.word 0
+		.byte 0
+		.byte 0x92
+		.byte 0
+		.byte 0
+	null_gdt_end:
 	hlt
 .size _start, . - _start
 
@@ -86,23 +113,48 @@ setup_pagetables:
 	and $~(1 << 31), %eax # Reset the oldest bit in control register 0
 	mov %eax, %cr0
 
-	movl $0x2003, 0x1000 # point to the PDPT with flags
-	movl $0x3003, 0x2000 # Move up 4 KB
-	movl $0x4003, 0x3000 # We have now set up the page table, we need to fill it up
-	xor %ecx, %ecx # Zero out ecx
-	# Creating the identity map
-	.idmap:
-		mov $4096, %eax # move the page size to the EAX register
-		mul %ecx # multiple current page index to eax. Beginning will be 0, of course. So, starting at index 0
-		movl %edx, %eax # Bruh, so apparently mul stores result into edx ;-;, we we're moving it into eax
-		or $0x83, %eax # Setting flags
-		movl %eax, 0x3000(,%ecx,8)
-		inc %ecx
-		cmp $0x200, %ecx
-		jne .idmap
+	setup_page_tables:
+    # Load address of page_table_l3 into %eax
+    movl $pdpt, %eax
+    orl $0b11, %eax              # Present, writable
+    movl %eax, pml4t      # Store in L4 table
+
+    # Load address of page_table_l2 into %eax
+    movl $pd, %eax
+    orl $0b11, %eax              # Present, writable
+    movl %eax, pdpt      # Store in L3 table
+
+    xorl %ecx, %ecx              # Zero out ECX counter
+
+	.loop:
+		movl $0x200000, %eax         # Load 2MB page size
+		mull %ecx                    # Multiply by ECX (EDX:EAX result)
+		orl $0b10000011, %eax        # Present, writable, huge page flag
+		movl %eax, pd(,%ecx,8) # Store at page_table_l2 + ECX * 8
+		incl %ecx                    # Increment ECX
+		cmpl $512, %ecx              # Check if whole table is mapped
+		jne .loop                    # If not, continue loop
+
+		ret
+
+
+	// movl $0x2003, 0x1000 # point to the PDPT with flags
+	// movl $0x3003, 0x2000 # Move up 4 KB
+	// movl $0x4003, 0x3000 # We have now set up the page table, we need to fill it up
+	// xor %ecx, %ecx # Zero out ecx
+	// # Creating the identity map
+	// .idmap:
+	// 	mov $4096, %eax # move the page size to the EAX register
+	// 	mul %ecx # multiple current page index to eax. Beginning will be 0, of course. So, starting at index 0
+	// 	movl %edx, %eax # Bruh, so apparently mul stores result into edx ;-;, we we're moving it into eax
+	// 	or $0x83, %eax # Setting flags
+	// 	movl %eax, 0x3000(,%ecx,8)
+	// 	inc %ecx
+	// 	cmp $0x200, %ecx
+	// 	jne .idmap
 	ret
 enable_pae_paging:
-	mov $0x1000, %eax # Address of the PML4T
+	mov $pml4t, %eax # Address of the PML4T
 	mov %eax, %cr3 # Move this address to the control register 3
 
 	mov %cr4, %eax # Enable PAE paging
@@ -119,10 +171,12 @@ enable_pae_paging:
 	.enable_paging:
 		mov %cr0, %eax
 		or $(1 << 31), %eax # Flipping the oldest bit in control register 0
-		mov %eax, %cr0 # TO:DO PAGING NOT WORKING!!! CANNOT WRITE TO CR0
+		mov %eax, %cr0
 	
+	// movl $0xb8000, %eax
+	// movl $0x4f524f45, (%eax)
 	# Paging is now enabled !!!!!!!!! :D
-	jmp load_gdt
+	jmp load_gdt # Far jump to reload the CS --> This long jump is messing stuff up >:(
 
 .nocpuid:
 	movb $'C', %al
@@ -143,22 +197,20 @@ error:
     mov %al, 0xb800a
     hlt
 
-# 64-bit Global Descriptor Table
-.section .rodata
-gdt64:
-    .quad 0
+# Reserve a stack for the initial thread.
+.section .bss
+.align 16
+gdtr_dump:
+	.skip 10
 
-.code_segment: 
-    .equ code_segment, . - gdt64
-    .quad (1 << 44) | (1 << 47) | (1 << 41) | (1 << 43) | (1 << 53)
+.align 4096
+pml4t:
+	.space 4096
+pdpt:
+	.space 4096
+pd:
+	.space 4096
 
-.data_segment: 
-    .equ data_segment, . - gdt64
-    .quad (1 << 44) | (1 << 47) | (1 << 41)
-
-.pointer:
-    .word gdt64_end - gdt64 - 1
-    .quad gdt64
-
-gdt64_end:
-
+stack_bottom:
+.skip 16384 # 16 KiB
+stack_top:

@@ -22,7 +22,6 @@ static uint16_t* terminal_buffer;
 
 // Initialize the terminal
 void terminal_initialize(void){
-    while(1);
     terminal_row = 0;
     terminal_column = 0;
     
