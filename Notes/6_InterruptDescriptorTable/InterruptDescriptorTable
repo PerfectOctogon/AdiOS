@@ -1,0 +1,98 @@
+Interrupts mainly used for exceptions, peripherals. 
+It has to be done in the kernel, bootloaders cannot really do it. 
+
+IDT (interrupt descriptor table)
+An interrupt tells the CPU to stop whatever it is doing, handle the interrupt and then continue.
+The goal is to specify ISR (Interrupt service routine) services the interrupt. We want to tell the CPU how it should handle the interrupt with what ISR(which we will define ourselves)
+
+What is an IDT entry made up of?
+Can be implemented as a C-struct with the attribute "packed", which means it will be packed inside memory without any padding. Can also be done in asm. 
+
+ISR (has some address called offset)
+
+2 bytes - offset low (these are the youngest two bytes of the offset)
+2 bytes - selector of the GDT code segment. 
+1 byte - IST (interrupt stack table) specified by the TSS. We don't really need this can be 0
+1 byte - attributes (standard is to set as a magic number) - 0x8E
+    present bit - valid IDT entry? (We might have interrupts we don't want to set ISR's for. So don't set the present bit)
+    DPL - desired priviledge level (ring 0 = 00)
+    reserved - 
+    type - 2 types of what you can handle from the IRS. 2 types of gates (interrupt(INT) gate - 1110, trap gate - 1111)
+        Interrupt gate - the cpu cannot do anything but handle this signal (send ack that will tell the CPU that it can continue doing things)
+        Trap gate - tells the cpu to do something, but it can still do other things like handle other interrupts that can occur. Software interrupts.
+2 bytes - offset mid specify the two bytes right after the 2 youngest bytes
+4 bytes - offset high specify the rest of the 4 oldest bytes of the address
+4 bytes of zeroes null descriptor
+
+The size of 1 IDT entry is 16 bytes (2^4 bytes)
+We need to create 256 of these entries because there are 256 different interrupts (2^8)
+
+--> 2^4 * 2^8 = 2^12 = 4096 bytes required
+
+We need to specify in the IDTR(interrupt descriptor table register) the 2 exact pieces of data. The size of this descriptor table and the offset (Where does our IDTR begin in memory)
+Size = 4095 so define a word
+Offset = wherever you place the first entry of the IDT
+
+Now we need to enable interrupts (STI) - set interrupt flag
+
+The programmer is responsible for keeping the CPU's state the same before and after the interrupt is handled
+
+When you define an ISR entry, you normally push all the CPU registers onto the stack. (Only the ones that need to be modified through the interrupt)
+For example, the interrupt handler SHOULD NOT need to change the control registers, so you wouldn't need to push that onto the stack.
+
+Then, store the stack pointer. Move the address of the stack to a register that is normally used to store addresses. So move to rdi for instance the current stack pointer
+
+Then, you can call a handler (doesn't have to be in assembly. Probably don't want to write all the interrupt handlers in assembly lol)
+
+After this, move the value in RDI into RSP (restoring the stack pointer)
+And then pop the registers one by one in reverse order
+Then, perform the assembly instruction IREDQ 
+
+Interrupt controllers
+PIC (programmable interrupt controller) 
+APIC (advanced programmable interrupt controller)
+
+LAPIC - Local APIC uses for multi-processing
+IOAPIC - Input output APIC 
+
+8259A legacy mode emulates the 8259A PIC.
+
+PIC controls interrupts. Decides how the interrupts should be handled before it considers the ISR. Master PIC, slave PIC.
+We can communicate with these PIC with the CPU I/O bus. There is a command port for sending commands, specifying what data is to be sent and there is a data port for receiving data from the chip.
+    Master PIC - 0x20 (command port), 0x21 (data port)
+    Slave PIC - 0xA0 (command port). 0xA1 (data port)
+
+Remapping the PIC. The ones from 0 - 15 interrupts are mapped to IRQ(interrupt request) channels. IRQ channels are used for requesting interrupts from peripherals or extension cords. USB controller for example. 
+
+We want to re-initialize the master and the slave PIC. We have to send to the command ports (0x11)
+We have to specify which IRQ's will be handled by which PIC. the master and the slave can handle 8 IRQ's at a time. Most standard way is to let the master have everything from 0 - 7 and slave will have 8 - 15.
+
+Master
+Command : 0x11, Data : 0 (Handle the 8 IRQ's that begin from 0)
+Slave
+Command : 0x11, Data : 8 (Handle the next 8 IRQ's from 8)
+
+One of the IRQ channels of the master has to be reserved by the slave. 
+
+Standard is to plug the slave into IRQ channel 2. 
+Master
+Data : 4
+Slave
+Data : 2 cascade nature of the slave
+
+Unmask IRQ number 2 so the slave can handle the mouse IRQ (IRQ 12)
+
+Master, Slave
+Data : 1 We have to specify what CPU we are using because the 8259A is not x86 specific. It was designed for a bunch of different chips. 
+
+Now, we have to deal with masking. Making an interrupt not go through. NMI - non-maskable interrupts. All the IRQ channels can be masked. Start with all the IRQ's masked and then unmask only the IRQ's we need. 
+How to mask them? Send it as a byte to the data ports.
+
+Master:
+Data : 11111111 (mask all channels from 0 - 7)
+Slave:
+Data : 11111111 (mask all the channels from 8 - 15)
+
+All the IRQ channels are now masked
+
+The youngest bit corresponds to IRQ 0 for the master and IRQ 8 for the slave.
