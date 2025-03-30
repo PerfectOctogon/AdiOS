@@ -96,3 +96,7 @@ Data : 11111111 (mask all the channels from 8 - 15)
 All the IRQ channels are now masked
 
 The youngest bit corresponds to IRQ 0 for the master and IRQ 8 for the slave.
+
+IRQ - Signal sent by hardware (or software) to the CPU to indicate that it needs attention
+Interrupt vector - A memory address that points to the interrupt service routine for a specific interrupt
+ISR - The function that executes when an interrupt occurs
