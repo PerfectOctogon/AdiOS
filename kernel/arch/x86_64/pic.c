@@ -8,7 +8,7 @@ void outb(uint8_t port, u_char byte){
         :);
 }
 
-char inb(uint8_t port){
+uint8_t inb(uint8_t port){
     uint8_t value;
 
     asm("inb %0"

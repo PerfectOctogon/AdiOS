@@ -60,10 +60,10 @@ uint16_t PIC_get_irr();
 uint16_t PIC_get_isr();
 
 // Send byte to command port
-uint16_t outb(uint8_t port, u_char byte);
+void outb(uint8_t port, u_char byte);
 
 // Receive byte from port
-char inb(u_char port);
+uint8_t inb(u_char port);
 
 // Waits for an IO operation to finish
 void io_wait();
