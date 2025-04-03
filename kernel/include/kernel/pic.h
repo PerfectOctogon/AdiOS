@@ -1,6 +1,7 @@
-/* Source : https://wiki.osdev.org/8259_PIC*/
+/* Source : https://wiki.osdev.org/8259_PIC */
 #include <cstdint>
 #include <stdint.h>
+#include <sys/types.h>
 
 // Define master and slave PIC offsets
 
@@ -47,13 +48,22 @@ void PIC_initialize(int master_offset, int slave_offset);
 void PIC_disable();
 
 // Masking an irq channel
-void mask_irq_channel(uint8_t irq_channel);
+void PIC_mask_irq_channel(uint8_t irq_channel);
 
 // Unmasking an irq channel
-void unmask_irq_channel(uint8_t irq_channel);
+void PIC_unmask_irq_channel(uint8_t irq_channel);
 
 // Get the value inside the IRR
-void get_irr();
+uint16_t PIC_get_irr();
 
 // Get the value inside ISR
-void get_isr();
+uint16_t PIC_get_isr();
+
+// Send byte to command port
+uint16_t outb(uint8_t port, u_char byte);
+
+// Receive byte from port
+char inb(u_char port);
+
+// Waits for an IO operation to finish
+void io_wait();
