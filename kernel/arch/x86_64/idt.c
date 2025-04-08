@@ -109,7 +109,7 @@ void isr_handler(struct stack_vals * stack_vals){
     printf("Encountered interrupt: %s\n", int_desc);
 
     // Infinite loop so we can stop after encountering interrupt
-    while(1);
+    //while(1);
 }
 
 void idt_full_initialize(){
