@@ -2,6 +2,8 @@
 #include <bits/types/stack_t.h>
 #include <string.h>
 #include <stdio.h>
+#include "../../include/kernel/isr.h"
+
 // This is the Interrupt descriptor table :)
 struct idt_64 IDT[NUM_INTERRUPTS];
 
@@ -77,9 +79,16 @@ void idt_load(){
     memset((void *)&IDT[0], 0, sizeof(IDT));
 }
 
+// Array of ISR functions declared inside isr.c
+extern void (*interrupt_handlers[32])();
 // Fills up the IDT with ISR's
 void idt_fill_idt(){
+    // These ISR's should be defined!
+    for(int i = 0; i < 32; i++){
+        idt_add_gate(i, 0x8E, 0x08, interrupt_handlers[i]);
+    }
 
+    // Rest of them (32 - 255) are not defined yet!
 }
 
 // Very simple isr handler for now so we can see if all the interrupts are being handled properly
@@ -95,4 +104,7 @@ void isr_handler(struct stack_vals * stack_vals){
     }
 
     printf("Encountered interrupt: %s\n", int_desc);
+
+    // Infinite loop so we can stop after encountering interrupt
+    while(1);
 }
