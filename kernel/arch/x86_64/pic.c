@@ -1,27 +1,34 @@
-#include <stdint.h>
 #include "../../include/kernel/pic.h"
+#include <stdint.h>
 
-void outb(uint8_t port, u_char byte){
-    asm("outb %1, %0;"
-        : 
-        : "r" (port), "r" (byte)
-        :);
+void outb(uint16_t port, uint8_t byte) {
+    asm volatile (
+        "outb %0, %1"
+        :
+        : "a"(byte), "Nd"(port)
+    );
 }
 
-uint8_t inb(uint8_t port){
+uint8_t inb(uint16_t port) {
     uint8_t value;
-
-    asm("inb %0"
-        : "=r" (value)
-        :
-        :);
-    
+    asm volatile (
+        "inb %1, %0"
+        : "=a"(value)
+        : "Nd"(port)
+    );
     return value;
 }
 
-void io_wait(){
-    asm("io_wait;");
+void io_wait() {
+    // This is a common technique to create a small delay.
+    // Writing to an unused port (0x80) which is historically used for delays
+    asm volatile (
+        "outb %%al, $0x80"
+        :
+        : "a"(0)
+    );
 }
+
 
 void PIC_send_EOI(uint8_t irq){
     // If the request is in the slave PIC

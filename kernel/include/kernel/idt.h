@@ -65,4 +65,7 @@ void idt_fill_idt();
 
 // Default ISR handler
 void isr_handler(struct stack_vals * stack_vals);
+
+// Fully initializes the IDT
+void idt_full_initialize();
 #endif

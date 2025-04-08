@@ -1,10 +1,9 @@
 /* Source : https://wiki.osdev.org/8259_PIC */
 
-#ifdef __PIC__
-#define __PIC__
+#ifndef _PIC_
+#define _PIC_
 
 #include <stdint.h>
-#include <sys/types.h>
 
 // Define master and slave PIC offsets
 
@@ -63,10 +62,10 @@ uint16_t PIC_get_irr();
 uint16_t PIC_get_isr();
 
 // Send byte to command port
-void outb(uint8_t port, u_char byte);
+void outb(uint16_t port, uint8_t byte);
 
 // Receive byte from port
-uint8_t inb(u_char port);
+uint8_t inb(uint16_t port);
 
 // Waits for an IO operation to finish
 void io_wait();
