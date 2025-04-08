@@ -1,0 +1,110 @@
+Recap:
+
+Bootloader - the very firsst thing the OS does is load the Bootloader
+The bootloader loads the kernel. Prepare an environment for the kernel to be properly functioning
+
+Kernel - 
+initialization code. After the bootloader is done, it has to start running the kernel initialization code
+
+Jump to the userspace, which interacts with the rest of the kernel
+
+How executable are made and what they are
+
+.C code --> compiler --> assembly file --> assembler --> object file --> Linker --> Executable linkable format
+
+And object file is very similar to an executable
+
+You can take multiple object files and pass them to a linker. The linker is responsible for taking the objects and managing them in such a way that you can create one final executable
+
+Toolchain - compiler, assembler, linker (Made for your OS that you are using)
+
+So, you cannot use this for your own OS. 
+
+Cross compiler - x86_64 elf can create o files for all formats. Very easy to make elf files to work
+
+Flat binary - code that you can flash onto a drive and then start executing right away
+
+The ELF:
+ELF header
+PHT - program header table contains information about the different sections of the ELF file
+
+Then, we have sections
+.text - Contains the code (executable instructions)
+.data
+...
+.rodata - read only data
+SHT - section header table also describes the sections. The difference is the PHT is associated in actual executable files. When we're dealing with the object files, we care more about the SHT.
+
+Program vs a process
+
+Program is something passive. It is just a construction that is somewhere in the disk , doesn't really do anything. The elf file for example is a passive structure, we're not doing anything with it right now. 
+
+A process is an OS concept the program becoming active. It is an active element of the OS. When we have to manage what a program is doing, it starts executing, it becomes a process. A process is something the OS needs to take care of because it's trying to use resources and trying to participate in the functioning of the OS. 
+
+Data is something that is required by the process, but not necessarily in the process itself. We're going to need to store it somewhere in the stack. The program itself will be stored in the stack and when the program requires more memory, it will be allocated somewhere in the stack.
+
+PCB - process control block
+
+We want to store this program somewhere in memory and then start executing them. 
+What is generally stored in an ELF file:
+
+ELF header is at the very beginning of the ELF file. 
+
+Bytes 0-3 : ELF signature
+0x7f - magic number (The first byte of the ELF file) 
+ELF - stored as ASCII
+
+byte 4 : 1 means 32 bit executable, 2 means 64 bit executable
+
+byte 5 : endianness : 1 - LE, 2 - BE
+
+byte 6 : ELF header version (version of the header itself)
+
+byte 7 : OS ABI
+
+8 - 15 : unused (padding)
+
+16 - 17 : tells us what the type of the ELF file is (1 = relocatable (object file)) (2 = executable file) (3 = shared library / object) (4 = core)
+
+18 - 19 : ISI (what CPU architecture) for x86 - 0x03. If it's 0x3E - x64
+
+20 - 23 : ELF version
+
+24 - 31: Program entry offset. we get 64 bit address that tells us where our program entry is (address we want to begin execution at)
+
+32 - 39 : Program header table offset. tells us where the PHT is. 
+
+40 - 47 : Section header table offset. 
+
+48 - 51 : Flags. for UNIX standard / UBS rwx (read, write execute) written in the form of 3 different bits
+
+52 - 53 : Size of ELF header
+
+54 - 55 : size of PHT entry
+
+56 - 57 : number of PHT entries
+
+58 - 59 : Stores the size of SHT entry
+
+60 - 61 : Number of SHT entries
+
+62 - 63 : Section index to the String table
+
+What is stored in the PHT?
+
+We have the offset of the PHT and we know the amount of entries.
+What will we find in an entry?
+
+0 - 3 : Segment type (0 - ignore segment) (1 - standard) (2 - dynamic) (3 - path to an executable) (4 - notes) We hope that this segment is just a std segment
+4 - 7 : Flags (You can implement flag support) (more rigorous flags than the ones in the ELF header)
+8 - 15 : Defines the offset of where in the ELF file can you find this section of the ELF file
+16 - 23 : Virtual address - supposed to be loaded in virtual memory address (because we set up paging)
+24 - 37 : Physical address (not important)
+32 - 39 : File size (size of the section inside the ELF file)
+Using the offset and file size, we can determine where does the section begin in the ELF file and where do they end. Where do they begin - offset, once you add the file size, you get where the file ends. 
+40 - 47 : Memory size (Size of the memory you reserve)
+48 - 55 : Required alignment 
+
+How do we deal with this?
+At the virtual address the memory size was specified, you should clear that memory. How much you clear is dictated by the memory size. Now, take the offset of where the section is in the ELF file and then you should read file size bytes from that offset and load that many bytes into the virtual address. 
+
