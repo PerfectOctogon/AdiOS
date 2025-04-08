@@ -1,5 +1,8 @@
 /* Source : https://wiki.osdev.org/8259_PIC */
-#include <cstdint>
+
+#ifdef __PIC__
+#define __PIC__
+
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -67,3 +70,5 @@ uint8_t inb(u_char port);
 
 // Waits for an IO operation to finish
 void io_wait();
+
+#endif

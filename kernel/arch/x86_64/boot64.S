@@ -13,7 +13,8 @@ long_mode_start:
     mov %ax, %fs
     mov %ax, %gs
 
-    # Interrupt handler
+    # Initialize interrupt table
+    
     
     call kernel_main
     hlt

@@ -46,7 +46,7 @@ Then, you can call a handler (doesn't have to be in assembly. Probably don't wan
 
 After this, move the value in RDI into RSP (restoring the stack pointer)
 And then pop the registers one by one in reverse order
-Then, perform the assembly instruction IREDQ 
+Then, perform the assembly instruction IRETQ 
 
 Interrupt controllers
 PIC (programmable interrupt controller) 
