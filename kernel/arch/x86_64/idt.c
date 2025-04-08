@@ -1,6 +1,7 @@
 #include "../../include/kernel/idt.h"
+#include <bits/types/stack_t.h>
 #include <string.h>
-
+#include <stdio.h>
 // This is the Interrupt descriptor table :)
 struct idt_64 IDT[NUM_INTERRUPTS];
 
@@ -66,6 +67,7 @@ void idt_add_gate(uint32_t index, uint8_t attributes, uint16_t code_segment_sele
     IDT[index].null_descriptor = 0x00000000;
 }
 
+// Initialize the IDT struct vals
 void idt_load(){
     // Size of IDT(256 for the number of entries we will eventually have) - 1
     idtr.idt_size = (sizeof(IDT)) - 1;
@@ -75,10 +77,22 @@ void idt_load(){
     memset((void *)&IDT[0], 0, sizeof(IDT));
 }
 
+// Fills up the IDT with ISR's
 void idt_fill_idt(){
 
 }
 
-void isr_handler(){
-    
+// Very simple isr handler for now so we can see if all the interrupts are being handled properly
+void isr_handler(struct stack_vals * stack_vals){
+    // We will write the interrupt description to this depending on the interrupt number that was passed
+    char * int_desc;
+
+    if(stack_vals->interrupt_code <= 21){
+        strcpy(int_desc, interrupt_description[stack_vals->interrupt_code]);
+    }
+    else{
+        strcpy(int_desc, "Unknown interrupt");
+    }
+
+    printf("Encountered interrupt: %s\n", int_desc);
 }

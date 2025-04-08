@@ -32,14 +32,17 @@ struct idt_pointer{
     uintptr_t offset;
 }__attribute__((packed));
 
-// Gate structure
-// struct gate_descriptor{
-//     // Address of the entry point of the ISR
-//     uint64_t offset;
-//     // Points to the code segment in GDT
-//     uint16_t selector;
-    
-// };
+// Pointers to values that were pushed into the stack by interrupt.S
+struct stack_vals{
+    // R- registers
+    uintptr_t r15, r14, r13, r12, r11, r10, r9, r8;
+    // Registers
+    uintptr_t rsp, rbp, rdi, rsi, rdx, rcx, rbx, rax;
+    // Interrupt code
+    uintptr_t interrupt_code;
+    // Interrupt error code
+    uintptr_t error_code;
+}__attribute__((packed));
 
 // Initializes the IDT
 void idt_load(void);
@@ -61,5 +64,5 @@ void lidt();
 void idt_fill_idt();
 
 // Default ISR handler
-void isr_handler();
+void isr_handler(struct stack_vals * stack_vals);
 #endif

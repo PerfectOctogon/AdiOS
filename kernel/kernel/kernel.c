@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include "../include/kernel/tty.h"
-#include "../include/kernel/pic.h"
-#include "../include/kernel/idt.h"
 
 void kernel_main(void){
     terminal_initialize();

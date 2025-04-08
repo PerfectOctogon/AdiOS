@@ -84,7 +84,7 @@ isr_common_stub:
         pushq %r14
         pushq %r15
     
-    # We need to store the stack pointer in rdi
+    # We need to store the stack pointer in rdi so we can access pushed elements as a struct
     mov %rsp, %rdi
     # Call the handler
     call isr_handler
