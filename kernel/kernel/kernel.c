@@ -8,7 +8,7 @@ void kernel_main(void){
     printf("Welcome to the 64-bit adios kernel\n");
 
     // Initialize PIC
-    //PIC_initialize(0x20, 0x28);
+    PIC_initialize(0x20, 0x28);
     idt_full_initialize();
     // Load interrupt descriptor table
 }
