@@ -77,7 +77,7 @@ void terminal_delete_last_line(){
 void terminal_putchar(char c){
     int line;
     unsigned char character = c;
-
+    
     // Write the character at the current cursor
     terminal_putentryat(character, terminal_color, terminal_column, terminal_row);
 
