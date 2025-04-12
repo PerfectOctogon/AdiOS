@@ -11,7 +11,7 @@ struct idt_pointer idtr;
 // Contains interrupt description we can print out :)
 // Source : https://wiki.osdev.org/Interrupt_Descriptor_Table
 char *interrupt_description[]={
-    "Divide error",
+    "Division by zero",
     "Debug exception",
     "NMI interrupt",
     "Breakpoint",
@@ -87,7 +87,7 @@ void idt_fill_idt(){
     }
 
     // Rest of them (32 - 255) are not defined yet!
-    for(int i = 0; i < NUM_INTERRUPTS; i++){
+    for(int i = 32; i < NUM_INTERRUPTS; i++){
         // Add default handler
         idt_add_gate(i, 0x8E, 0x08, isr_handler);
     }
@@ -101,8 +101,12 @@ void isr_handler(struct stack_vals * stack_vals){
     if(stack_vals->interrupt_code <= 21){
         strcpy(int_desc, interrupt_description[stack_vals->interrupt_code]);
     }
-
-    printf("Encountered interrupt: %s\n", int_desc);
+    else{
+        for(int i = 0; i < stack_vals->interrupt_code; i++){
+            printf("O");
+        }
+    }
+    printf("Encountered interrupt in kernel: %s\n", int_desc);
 
     // Infinite loop so we can stop after encountering interrupt
     while(1);
