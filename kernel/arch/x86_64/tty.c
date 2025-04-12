@@ -79,6 +79,16 @@ void terminal_putchar(char c){
     int line;
     unsigned char character = c;
 
+    if (c == '\n') {
+        terminal_column = 0;
+        if (++terminal_row == VGA_HEIGHT) {
+            terminal_scroll(1);
+            terminal_delete_last_line();
+            terminal_row = VGA_HEIGHT - 1;
+        }
+        return;
+    }
+    
     // Write the character at the current cursor
     terminal_putentryat(character, terminal_color, terminal_column, terminal_row);
 
