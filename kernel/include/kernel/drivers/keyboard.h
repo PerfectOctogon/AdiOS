@@ -3,4 +3,6 @@
 
 // source : https://wiki.osdev.org/PS/2_Keyboard
 
+char scancode_to_keycode(char scancode);
+
 #endif

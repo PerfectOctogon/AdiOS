@@ -1,6 +1,7 @@
 #include "../../include/kernel/irq.h"
 #include "../../include/kernel/idt.h"
 #include "../../include/kernel/pic.h"
+#include "../../include/kernel/drivers/keyboard.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -31,7 +32,7 @@ void irq_handler(struct stack_vals * stack_vals){
     // If the interrupt code is 33, we can read it into scancode to clear keyboard buffer
     if(stack_vals->interrupt_code == 33){
         unsigned char scancode = inb(0x60);
-        printf("%c", scancode);
+        printf("%c", scancode_to_keycode(scancode));
     }
     // Send EOI to slave
     if(stack_vals->interrupt_code >= 40){
