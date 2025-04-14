@@ -1,4 +1,5 @@
 #include "../../include/kernel/idt.h"
+#include "../../include/kernel/irq.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -10,7 +11,7 @@ struct idt_pointer idtr;
 
 // Contains interrupt description we can print out :)
 // Source : https://wiki.osdev.org/Interrupt_Descriptor_Table
-char *interrupt_description[]={
+static char *interrupt_description[]={
     "Division by zero",
     "Debug exception",
     "NMI interrupt",
@@ -109,14 +110,16 @@ void isr_handler(struct stack_vals * stack_vals){
     printf("Encountered interrupt in kernel: %s\n", int_desc);
 
     // Infinite loop so we can stop after encountering interrupt
-    while(1);
+    //while(1);
 }
 
 void idt_full_initialize(){
     // Set IDTR vals
     idt_load();
-    // Fill up the IDT
+    // Fill up the IDT with ISR's
     idt_fill_idt();
+    // Fill up the IDT with IRQ's
+    irq_init();
     // Load IDT into IDTR
     lidt();
 }
