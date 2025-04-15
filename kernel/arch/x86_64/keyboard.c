@@ -105,17 +105,22 @@ void handle_keyboard_interrupt(){
     handle_key(scancode);
 
     // Test only! Comment out this part!!!
-    enum normal_keys_e keycode;
-    if(dequeue_keycode(&keycode) == 0){
-        unsigned char character = keycode_to_ascii(keycode, shift_state);
+    // enum normal_keys_e keycode;
+    // if(dequeue_keycode(&keycode) == 0){
+    //     unsigned char character = keycode_to_ascii(keycode, shift_state);
 
-        if(character > 0){
-            printf("%c", character);
-        }
-    }
+    //     if(character > 0){
+    //         printf("%c", character);
+    //     }
+    // }
 
     // Send EOI here (IRQ line 1 = keyboard)
     PIC_send_EOI(1);
+}
+
+// This function will only decode keycodes that were queued
+char kbd_get_ascii(enum normal_keys_e keycode){
+    return keycode_to_ascii(keycode, shift_state);
 }
 
 // Dequeue / consume a keycode

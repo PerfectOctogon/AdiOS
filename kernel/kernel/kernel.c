@@ -16,6 +16,6 @@ void kernel_main(void){
     idt_full_initialize();
 
     while(1){
-        asm("sti;");
+        poll_keyboard();
     };
 }

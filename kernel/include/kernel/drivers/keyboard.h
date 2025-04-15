@@ -24,4 +24,7 @@ int dequeue_keycode(enum normal_keys_e * keycode_out);
 
 // Public API to check if the buffer is empty before dequeing
 int is_kbd_buffer_empty();
+
+// Public API to get queued ascii vals
+char kbd_get_ascii(enum normal_keys_e keycode);
 #endif

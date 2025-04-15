@@ -162,6 +162,57 @@ void terminal_putchar(char c){
     }
 }
 
+// Write a character to the terminal
+void terminal_putchar_polled(char c){
+    int line;
+    unsigned char character = c;
+
+    if (c == '\n') {
+        terminal_column = 0;
+        if (++terminal_row == VGA_HEIGHT) {
+            terminal_scroll(1);
+            terminal_delete_last_line();
+            terminal_row = VGA_HEIGHT - 1;
+        }
+        update_cursor(terminal_column, terminal_row + 1);
+        return;
+    }
+    
+    if (c == '\b'){
+        if(terminal_column > 0){
+            terminal_column --;
+        } else if (terminal_row > 0){
+            terminal_row--;
+            terminal_column = VGA_WIDTH - 1;
+        } else{
+            // don't need to delete anything here pos: (0, 0)
+        }
+
+        const size_t index = terminal_row * VGA_WIDTH + terminal_column;
+        terminal_buffer[index] = (terminal_color < 8) | ' ';
+        update_cursor(terminal_column, terminal_row + 1);
+        return;
+    }
+
+    // Write the character at the current cursor
+    terminal_putentryat(character, terminal_color, terminal_column, terminal_row);
+
+    // If we went over the width of the terminal, then go down a line
+    if(++terminal_column == VGA_WIDTH){
+        terminal_column = 0;
+        // If we went over the height of the terminal, then scroll up
+        if(++terminal_row == VGA_HEIGHT){
+            for(line = 1; line < VGA_HEIGHT; line++){
+                terminal_scroll(line);
+            }
+            // Delete the last line of the terminal so we can write more stuff there
+            terminal_delete_last_line();
+            terminal_row = VGA_HEIGHT - 1;
+        }
+    }
+    update_cursor(terminal_column, terminal_row + 1);
+}
+
 // Use to write some data of size to the terminal in ASCII rep
 void terminal_write(const char * data, size_t size){
     // Write some characters to the VGA buffer
@@ -174,4 +225,17 @@ void terminal_write(const char * data, size_t size){
 // Use to write a string to the terminal
 void terminal_writestring(const char * string){
     terminal_write(string, strlen(string));
+}
+
+void poll_keyboard(){
+    // If the buffer isn't empty, we can get keycode from the keyboard
+    if(!is_kbd_buffer_empty()){
+        // Because we're dealing with the terminal, we can convert most of the keycodes into ascii
+        // So we can print it to the screen
+
+        enum normal_keys_e keycode;
+        if(dequeue_keycode(&keycode) != -1){
+            terminal_putchar_polled(kbd_get_ascii(keycode));
+        }
+    }
 }
