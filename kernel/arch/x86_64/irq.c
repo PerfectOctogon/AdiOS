@@ -36,6 +36,7 @@ void irq_handler(struct stack_vals * stack_vals){
     // Send EOI to slave
     if(stack_vals->interrupt_code >= 40){
         outb(0xA0, 0x20);
+        // PIC_send_EOI(0xA0);
     }
 
     // Send EOI to master

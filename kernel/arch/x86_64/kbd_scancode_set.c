@@ -125,6 +125,16 @@ enum normal_keys_e get_keycode(char scancode){
     return scancode_set_one[scancode];
 }
 
-char get_ascii(char scancode){
+char get_ascii(char scancode, int shift_state){
+    if(shift_state){
+        return shift_keycodes[scancode_set_one[scancode]];
+    }
     return keycodes[scancode_set_one[scancode]];
+}
+
+char keycode_to_ascii(enum normal_keys_e keycode, int shift_state){
+    if(shift_state){
+        return shift_keycodes[keycode];
+    }
+    return keycodes[keycode];
 }
