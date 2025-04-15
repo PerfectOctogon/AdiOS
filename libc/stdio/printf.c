@@ -61,6 +61,40 @@ int printf(const char* restrict format, ...) {
 			if (!print(str, len))
 				return -1;
 			written += len;
+		} else if (*format == 'd') {
+			format++;
+			int value = va_arg(parameters, int);
+		
+			char buffer[32];
+			char *buf_ptr = buffer + sizeof(buffer) - 1;
+			*buf_ptr = '\0';
+		
+			bool is_negative = false;
+			if (value < 0) {
+				is_negative = true;
+				value = -value;
+			}
+		
+			// Convert integer to string (base 10)
+			do {
+				*(--buf_ptr) = '0' + (value % 10);
+				value /= 10;
+			} while (value);
+		
+			if (is_negative) {
+				*(--buf_ptr) = '-';
+			}
+		
+			size_t len = buffer + sizeof(buffer) - 1 - buf_ptr;
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+		
+			if (!print(buf_ptr, len))
+				return -1;
+		
+			written += len;
 		} else {
 			format = format_begun_at;
 			size_t len = strlen(format);
