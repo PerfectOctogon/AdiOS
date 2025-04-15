@@ -5,4 +5,6 @@
 // Source : https://wiki.osdev.org/PS/2_Keyboard
 
 char get_ascii(char scancode);
+
+enum normal_keys_e get_keycode(char scancode);
 #endif

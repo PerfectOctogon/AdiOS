@@ -1,4 +1,5 @@
 #include "../../include/kernel/drivers/kbd_scancode_set.h"
+#include "../../include/kernel/drivers/keycodes.h"
 
 char scancode_set_one[256]={
     0,
@@ -105,6 +106,24 @@ char keycodes[] =
     '/', '*', '\n',                      // keypad
     '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.',    // keypad
 };
+
+
+char shift_keycodes[] =
+{
+      0, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ')', '!', '@',
+    '#', '$', '%', '^', '&', '*', '(', '~', '_', '+', '|', '\b', ' ', '\t',
+    '\n', '\033', '{', '}', ':', '"', '<', '>', '?',
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,       // caps, shift, ctrl, alt, gui, apps
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', // function keys
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   // prntscrn, scroll, ...
+    '/', '*', '\n',                      // keypad
+    '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.',    // keypad
+};
+
+enum normal_keys_e get_keycode(char scancode){
+    return scancode_set_one[scancode];
+}
 
 char get_ascii(char scancode){
     return keycodes[scancode_set_one[scancode]];

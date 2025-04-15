@@ -5,7 +5,7 @@
 
 void kernel_main(void){
     terminal_initialize();
-    printf("Welcome to the 64-bit ADIOS kernel\n");
+    printf("Welcome to the 64-bit AdiOS kernel\n");
     printf("Initializing PIC...\n");
     // Initialize PIC
     PIC_initialize(0x20, 0x28);

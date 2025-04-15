@@ -29,13 +29,9 @@ void irq_handler(struct stack_vals * stack_vals){
     char * int_desc = interrupt_description[stack_vals->interrupt_code - 32];
     // printf("Interrupt request : %s\n", int_desc);
     
-    // If the interrupt code is 33, we can read it into scancode to clear keyboard buffer
+    // If the interrupt code is 33, we can let the keyboard module handle this interrupt
     if(stack_vals->interrupt_code == 33){
-        unsigned char scancode = inb(0x60);
-        unsigned char character = scancode_to_keycode(scancode);
-        if(character > 0){
-            printf("%c", scancode_to_keycode(scancode));
-        } 
+        handle_keyboard_interrupt();
     }
     // Send EOI to slave
     if(stack_vals->interrupt_code >= 40){
