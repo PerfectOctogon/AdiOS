@@ -22,7 +22,10 @@ static int ctrl_state = 0;
 static int alt_state = 0;
 static int fn_state = 0;
 
-char scancode_to_ascii(char scancode){
+// Helper functions must be hidden
+
+
+static char scancode_to_ascii(char scancode){
     // Release bounds indicates if a scancode was a key make or break
     char release_bounds = 0;
     // printf("Scancode : %d\n", scancode);
@@ -34,12 +37,26 @@ char scancode_to_ascii(char scancode){
 }
 
 // Returns the keycode of the key that was pressed
-enum normal_keys_e scancode_to_keycode(char scancode){
+static enum normal_keys_e scancode_to_keycode(char scancode){
     return get_keycode(scancode);
 }
 
+// Enqueue a keycode into the buffer
+static int enqueue_keycode(enum normal_keys_e keycode){
+    int next_head = (buffer_head + 1) % KBD_BUFFER_SIZE;
+
+    // If this is true, our buffer is full
+    if(next_head == buffer_tail){
+        return -1;
+    }
+
+    kbd_buffer[buffer_head] = keycode;
+    buffer_head = next_head;
+    return 0;
+}
+
 // Handle a key input
-void handle_key(char scancode){
+static void handle_key(char scancode){
     // Check if this is a break (key releaes)
     int is_break = scancode & 0x80;
 
@@ -78,6 +95,8 @@ void handle_key(char scancode){
     }
 }
 
+// Functions for the public Keyboard API
+
 // Handles the keyboard interrupt
 void handle_keyboard_interrupt(){
     // Handle key here
@@ -97,20 +116,6 @@ void handle_keyboard_interrupt(){
 
     // Send EOI here (IRQ line 1 = keyboard)
     PIC_send_EOI(1);
-}
-
-// Enqueue a keycode into the buffer
-int enqueue_keycode(enum normal_keys_e keycode){
-    int next_head = (buffer_head + 1) % KBD_BUFFER_SIZE;
-
-    // If this is true, our buffer is full
-    if(next_head == buffer_tail){
-        return -1;
-    }
-
-    kbd_buffer[buffer_head] = keycode;
-    buffer_head = next_head;
-    return 0;
 }
 
 // Dequeue / consume a keycode

@@ -4,6 +4,8 @@
 #include <string.h>
 
 #include <kernel/tty.h>
+#include "../../include/kernel/drivers/keyboard.h"
+#include "../../include/kernel/pic.h"
 #include "vga.h"
 
 // Width of the screen
@@ -19,6 +21,42 @@ static size_t terminal_column;
 static uint8_t terminal_color;
 // Current pointer to the VGA buffer in memory
 static uint16_t* terminal_buffer;
+
+// Cursor functions
+static void enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
+{
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+}
+
+static void disable_cursor()
+{
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
+}
+
+static void update_cursor(int x, int y){
+    uint16_t pos = y * VGA_WIDTH + x;
+
+    outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+uint16_t get_cursor_position(void)
+{
+    uint16_t pos = 0;
+    outb(0x3D4, 0x0F);
+    pos |= inb(0x3D5);
+    outb(0x3D4, 0x0E);
+    pos |= ((uint16_t)inb(0x3D5)) << 8;
+    return pos;
+}
+
 
 // Initialize the terminal
 void terminal_initialize(void){
@@ -36,6 +74,8 @@ void terminal_initialize(void){
             terminal_buffer[index] = vga_entry(' ', terminal_color);
         }
     }
+    
+    enable_cursor(0, 0);
     return;
 }
 
@@ -89,6 +129,21 @@ void terminal_putchar(char c){
         return;
     }
     
+    if (c == '\b'){
+        if(terminal_column > 0){
+            terminal_column --;
+        } else if (terminal_row > 0){
+            terminal_row--;
+            terminal_column = VGA_WIDTH - 1;
+        } else{
+            // don't need to delete anything here pos: (0, 0)
+        }
+
+        const size_t index = terminal_row * VGA_WIDTH + terminal_column;
+        terminal_buffer[index] = (terminal_color < 8) | ' ';
+        return;
+    }
+
     // Write the character at the current cursor
     terminal_putentryat(character, terminal_color, terminal_column, terminal_row);
 
@@ -113,6 +168,7 @@ void terminal_write(const char * data, size_t size){
     for(size_t i = 0; i < size; i++){
         terminal_putchar(data[i]);
     }
+    update_cursor(terminal_column, terminal_row + 1);
 }
 
 // Use to write a string to the terminal
