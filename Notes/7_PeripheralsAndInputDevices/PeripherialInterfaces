@@ -166,3 +166,5 @@ READ_PCI
 If this expression is true, it's multifunction
 
 To check if a device exists. In the loop of functions, you need to check if the vendor ID is 0 or FFFF. If so, then this device doesn't exist. 
+
+If it's a multifunction, 

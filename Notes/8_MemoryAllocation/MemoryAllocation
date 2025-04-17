@@ -1,0 +1,56 @@
+malloc - memory allocate
+free - free memory allocation
+
+OS should implement this so a program can use memory managed by the OS. We will be allocating pages to different processes and we're going to use different page flags and things in the page table to keep track of which pages can be used by which processes
+
+If a given process is allocating less than a page size, the process is going to be given a page anyways. We can use segmentation again to give segments to certain processes. When a process tries to write or read from a memory address it doesn't have assigned, you can throw a seg fault.
+Malloc takes the size of the memory that needs to be allocated and returns the virtual base address of this allocated memory
+Free takes a memory address and de-allocates that memory
+
+Algorithms to implement these primitives (malloc and free)
+
+bit-map allocator (inefficient)
+You have the memory, it splits it into pages. Each page is going to be allocated or not. The idea is to have a bit array of 0's by default that maps to each page region in memory. You have to consider whether a given page is free or not, 0 means it's free and 1 means it's allocated to another process.
+Malloc is very simple - a brute force search through the array. Once it finds a 0, it changes it to 1. It reads a mapping (a linear formula for example) and then allocates the page that was mapped to that bit.
+To free a memory, you check which bit that page address corresponds to and set it to 0.
+
+Analysis - For any byte we want to allocate, we need to do a full brute-force search O(n) time complexity. Allocating is expensive if you want to allocate k bytes, it becomes O(n^k) - a polynomial time complexity (very inefficient)
+Freeing is efficient as it's constant time. 
+
+Free-list Algorithm
+
+We have our memory and we have it split. We use a linked list where each memory region points to the next one. We keep track of two pointers, head and tail
+This linked list is a list of all the different pages that are free. As it only contains free regions, you can simply grab the address at the head (pop) and this will be returned by malloc.
+Malloc is constant time!
+
+The cost is in the initialization of this linked list. In OS, you usually don't care about initialization times anyways.
+Tail is useful for freeing. Instead of tail point to null, we make the tail point to the block that we freed, which becomes the new tail.
+
+Allocating 1 byte is constant time, but allocating n bytes is O(n).
+
+An algorithm that can handle larger units of allocation - 
+
+Buddy allocator
+You have your virtual memory which is some sort of power of 2. Whenever you get an alloc request for 3MB for example, and we have 64MB. We will split our entire memory until we can find a region that satisfies:
+1) 3MB fits in that region
+2) If we split it again, it won't fit
+
+So we split the original memory in half, 32 MB. Will it fit in 32MB? Yes. Will it fit in 16MB? Yes! So we split again and keep going until we satisfy our requirement
+
+So we have split it till we're at 4MB for the region. Will it fit in 4MB? Yes. But it won't fit in 2. We lock that memory region and allocate it
+We have a O(log(n)) time complexity. But if we want to allocate just a byte, buddy allocator will have an O(log(n)) time complexity while a free list will have just a constant time complexity
+
+Buddy allocator comes with internal fragmentation. We need to allocate 3MB, and allocated 4MB. With the buddy allocator, we can't split allocated memory regions. We need to take that into consideration. This wastes space. There's a whole 1 MB that a process will not use
+
+Using a balanced search tree (AVL / Red-Black trees)
+Red-black trees
+You have nodes. Each node either has to be black or red. NIL nodes are going to be termination nodes and are black.
+A red node cannot have a red child
+Key rule that allows balancing : Path from any node to NIL nodes has to go through the same amount of black nodes
+
+Nodes are going to contain - address of un-allocated memory. Second parameter will contain the size of that memory.
+You find a size that satisfies you, and return the address of the allocated memory. Then you remove that node from the tree.
+
+Creating the tree, picking right sizes and updating it in real time.
+Constructing this tree which would have the right sizes is a non-trivial task. 
+
