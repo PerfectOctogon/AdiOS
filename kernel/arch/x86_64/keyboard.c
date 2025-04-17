@@ -21,6 +21,7 @@ static int shift_state = 0;
 static int ctrl_state = 0;
 static int alt_state = 0;
 static int fn_state = 0;
+static int caps_state = 0;
 
 // Helper functions must be hidden
 
@@ -73,6 +74,10 @@ static void handle_key(char scancode){
         else if(scancode_to_keycode(scancode) == KEYCODE_LCTRL || scancode_to_keycode(scancode) == KEYCODE_RCTRL){
             ctrl_state = 0;
         }
+        // We don't need to read in capslock break event
+        // else if(scancode_to_keycode(scancode) == KEYCODE_CAPS){
+        //     caps_state = 0;
+        // }
 
         // Return here, we don't want to push break evets to the queue
         return;
@@ -87,6 +92,11 @@ static void handle_key(char scancode){
     // If it's a ctrl key, we can set the ctrl state to 0
     else if(scancode_to_keycode(scancode) == KEYCODE_LCTRL || scancode_to_keycode(scancode) == KEYCODE_RCTRL){
         ctrl_state = 1;
+        return;
+    }
+    // Toggle the caps lock
+    else if(scancode_to_keycode(scancode) == KEYCODE_CAPS){
+        caps_state ^= 1;
         return;
     }
     // Push everything else (non-modifier / non-break)to queue
@@ -120,7 +130,8 @@ void handle_keyboard_interrupt(){
 
 // This function will only decode keycodes that were queued
 char kbd_get_ascii(enum normal_keys_e keycode){
-    return keycode_to_ascii(keycode, shift_state);
+    // Xorring the caps state because only one of them can be turned on at once for shift characters
+    return keycode_to_ascii(keycode, shift_state ^ caps_state);
 }
 
 // Dequeue / consume a keycode
