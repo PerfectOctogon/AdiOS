@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "../include/kernel/tty.h"
 #include "../include/kernel/idt.h"
 #include "../include/kernel/pic.h"
@@ -14,6 +15,8 @@ void kernel_main(void){
     printf("Initializing Interrupt Descriptor Table...\n");
     // Initialize the IDT
     idt_full_initialize();
+
+    int * int_prt = (int *)malloc(sizeof(int));
 
     while(1){
         poll_keyboard();
