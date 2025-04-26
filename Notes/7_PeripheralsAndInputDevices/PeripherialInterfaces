@@ -1,0 +1,170 @@
+PS/2 - Introduced with the Personal system version 2
+
+Was used for a long time.
+
+PS/2 primary port (purple)
+PS/2 secondary port (green)
+
+7-pin ports
+
+PS/2 primary port connects to a keyboard 
+PS/2 secondary port connects to a pointing device (such as a mouse, but not guranteed to)
+
+PS/2 doesn't have "hot plugin" which allows for a plug-and-play mechanism
+
+When you unplug a keyboard and plug it back in, it will not function. It required a hard reboot
+
+PS/2 ports connect to a PS/2 controller. CPU communicates with the controller through the IO bus
+The controller comes with a data and command port : 
+0x64 - command
+0x60 - data
+
+Most moderm motherboards have PS/2 emulation for USB devices
+
+PS/2 controller maps the proper irq channels for these two PS2 ports. Primary channel gets the irq channel 1. Secondary channel gets the irq channel 12
+
+Read information from the dataport for all the information that you need
+
+Read a byte from IO port 0x60 (PS/2 data port) upon IRQ 1. This contains a scancode, which provides information about which key is pressed or released. Keyboard driver needs to be abstract so the OS can remain scalable. 
+
+Send ack to master or slave after you get the scancode
+
+PS/2 secondary port initialization
+
+Send two commands:
+1) 0xA8, 0x20 to command port
+
+Enable the secondary PS2 port
+Now, the data port will contain a "status" You need to retrieve this status, set the 2nd youngest bit to 1. Then we will send this modified status to the data port.
+
+2) Read status from data, OR with 2 to set 2nd youngest bit
+3) Send 0x60 to command
+4) Send modified status to data port
+
+Setting the secondary port to streaming mode
+
+We require this secondary port to report information (streaming data)
+5) Send command 0xD4 to command port (modify something in the secondary port)
+6) Set it to streaming reporting mode - Send 0xF4 to data port
+
+Now, ports and information reporting is enabled
+
+Check if this is done correctly :
+7) Check data port - if data port contains 0xFA(acknowledgement), we were successful :)
+
+Mouse (in secondary port)
+Sends three bytes whenever the PS/2 mouse moves. But it'll only send 1 byte per every interrupt. We need a buffer (3 bytes)
+
+Read bytes from PS/2 data port upon IRQ12 and store it in a buffer
+
+First byte that it sends
+(Bit 0 = oldest bit)
+Bit 0 - contains y-overflow. (If the mouse has moved vertically and the values are already high) Happens when mouse moved vertically quickly
+Bit 1 - contains x-overflow. (If the mouse has moved horizontally and the values are already high) Happens when mouse moved horizontally quickly
+Bit 2 - Y sign
+Bit 3 - X sign
+Bit 4 - 1
+Bit 5 - Button middle
+Bit 6 - RMB
+Bit 7 - LMB
+
+Second byte
+Signed two's complement
+Delta x - change in x (+ve if mouse moves right and -ve if mouse moves to the left)
+
+Third byte
+Signed two's complement
+Delta y - change in y (-ve if mouse moves up and +ve if mouse moves down) (Possibly negated to emulate modern mouse intuition)
+
+Peripheral component interconnect (PCI bus)
+Used for connecting peripheral devices. Newer bus is called PCIE
+
+PCI controller controls 8 PCI busses. Interface was created to generalize and abstract peripheral connections. Each bus can handle 32 devices (extension cord, mouse keyboard etc.)
+
+So in total, we can have 256 devices. Each device can have eight functions
+
+For example, you can have a sound card, which is on PCI bus 3 and device number 7 and it could have function 0 for sound output and function 4 for sound processing. You can reference all of it in a simple way. 
+
+PCIe - Peripheral component interconnect express
+
+The PCIE busses are all serial, not parallel. People used to think parallel busses were faster. The intuition was that when you have data sent at the same time, it'll be faster than sending them bit-by-bit. In reality, parallel buses can have more conflict. They have a larger electromagnetic field which can cause interference and a lot of error correction. When you have to correct an error, you have to send all the information again, which could potentially increase the chance of another error. So in average, serial busses are actually faster than parallel buses because they require for lesser error connection and when an error had to be corrected, it just had to send one bit. 
+
+PCIe is backwards compatible with PCI
+
+ACPI - advanced configuration power interface
+
+PCI command port - 0xCF8
+PCI data port - 0xCFC
+
+Generally make functions for writing and reading from the PCI bus. For every function of a device and a bus, you have a lot of info. Some of it, you'll need and some of it, you won't need.
+
+PCI controller ports are 32 bits wide, so you'll need to use outl (out long) and inl (in long) for communicating with these ports.
+
+Reading information
+
+Send PCI ID to command port
+PCI ID - 32 bit value
+Starts with a 1000...
+Position 18 (consider the oldest bit 31 and youngest bit = 0)
+
+bit 18 - 16 : bus id (3 bits to address 8 buses)
+next 5 bits (15 - 11) : device id (5 bits to address 32 devices)
+bits 10 - 8 : function (3 bits to address 8 functions)
+
+Remaining byte considers register offset
+
+Reg offset has to be anded with 0xFC so that the last two bits aren't significant (They're always 0 we're doing this to conserve space)
+
+Now, we can read from the data port (store this into tmp for example)
+
+tmp >> ((register offset % 4) << 3)
+We have now read a piece of information from the data port
+
+We can also write the same way by writing to the data port
+
+We now have reading and writing functions. With this, we can enumerate PCI devices. We can display PCI devices currently plugged in and give some information about them.
+
+Iterate:
+
+for(buses){
+    for(devices){
+        for(functions){
+            
+        }
+    }
+}
+
+Struct
+
+Vendor id
+Device id
+class
+subclass
+interface
+revision
+interrupt
+
+A lot of devices write their information to the RAM. So if you have a memory buffer, you can write and read from that memory buffer. We need to know where that buffer is. You can use base address registers provided by the PCI.
+
+Get device descriptor function takes a bus and device for example. It should read from the PCI bus into 32 bit values from -
+
+Vendor id - 0x00
+Device - 0x02
+Class - 0x0B
+subclass - 0x0A
+Interface - 0x09
+Revision - 0x08
+Interrupt - 0x3C
+
+If you know a device has only one function, we can only enumerate that function. To know if a device has only one function, you have to
+
+READ_PCI
+(BUS, DEVICE, 0, 0x0E)
+&
+(1 << 7)
+
+If this expression is true, it's multifunction
+
+To check if a device exists. In the loop of functions, you need to check if the vendor ID is 0 or FFFF. If so, then this device doesn't exist. 
+
+If it's a multifunction, 

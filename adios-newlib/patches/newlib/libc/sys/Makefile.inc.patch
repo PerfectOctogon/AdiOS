@@ -1,0 +1,9 @@
+--- newlib-4.4.0.20231231/newlib/libc/sys/Makefile.inc	2023-12-31 13:00:18.000000000 -0400
++++ newlib-patched/newlib/libc/sys/Makefile.inc	2025-04-24 17:34:04.280005222 -0300
+@@ -70,3 +70,6 @@
+ if HAVE_LIBC_SYS_Z8KSIM_DIR
+ include %D%/z8ksim/Makefile.inc
+ endif
++if HAVE_LIBC_SYS_ADIOS_DIR
++include %D%/adios/Makefile.inc
++endif

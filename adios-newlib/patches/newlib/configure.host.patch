@@ -1,0 +1,22 @@
+--- newlib-4.4.0.20231231/newlib/configure.host	2023-12-31 13:00:18.000000000 -0400
++++ newlib-patched/newlib/configure.host	2025-04-24 17:34:42.536615079 -0300
+@@ -582,6 +582,9 @@
+   z8k-*-coff)
+ 	sys_dir=z8ksim
+ 	;;
++  x86_64-*-adios*)
++	sys_dir=adios
++	;;
+ esac
+ 
+ # Host specific flag settings -- usually for features that are not
+@@ -877,6 +880,9 @@
+   z8k-*-*)
+ 	syscall_dir=syscalls
+ 	;;
++  x86_64-*-adios*)
++	syscall_dir=syscalls
++	;;
+   *)
+ 	newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
+ 	syscall_dir=

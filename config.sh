@@ -1,5 +1,5 @@
-SYSTEM_HEADER_PROJECTS="libc kernel"
-PROJECTS="libc kernel"
+SYSTEM_HEADER_PROJECTS="kernel"
+PROJECTS="kernel"
 
 export MAKE=${MAKE:-make}
 export HOST=${HOST:-$(./default-host.sh)}
@@ -13,6 +13,7 @@ export PREFIX=/usr
 export EXEC_PREFIX=$PREFIX
 export BOOTDIR=/boot
 export LIBDIR=$EXEC_PREFIX/lib
+export NEWLIBDIR="$(pwd)/adios-newlib"
 export INCLUDEDIR=$PREFIX/include
 
 export CFLAGS='-O2 -g2'

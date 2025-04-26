@@ -14,15 +14,15 @@ I have also included some personal notes I took when studying inside a directory
 # Purpose
 I am getting interested in cyber security and related fields so I thought : what better way is there to learn about securing systems than creating your own operating system? This is also a project aimed to better my understanding about the fundamental structure of an OS. I aim to learn about system calls, interrupts and many more things that a typical OS handles / provides abstraction for. Hopefully, I come out of this project with an OS that contains the following : 
 
-    - Basic IO (Keyboard support, with potentially even mouse!) <-- Current status :)
-    - OS file structure (directories, text files)
+    - Basic IO (Keyboard support, with potentially even mouse!)
+    - Port newlib for access to C-standard library
+    - OS file structure (directories, text files) <-- current progress :)
     - Running commands (ls, cd etc...)
     - Ability to execute programs (memory management), which I believe would be the most challenging task
 
 # Tools used (Will update)
     - x86 Assembly language (nasm compiler)
-    - C (gcc cross compiler for generic target (i686-elf))
-    - Docker for containerization
+    - C (gcc cross compiler for generic target (i686-elf / x86_64-elf))
     - Qemu for OS virtualization
     - Xorriso for creating iso image
     - GNU GRUB as bootloader
@@ -30,6 +30,7 @@ I am getting interested in cyber security and related fields so I thought : what
 # How to run
 Before you can run this, you will need to install a cross compiler targeting i686-elf. There should be resources online showing how to install this compiler. Or, you can make your own!
 Then, install Qemu - for OS virtualization.
+After this, you need to go into adios-newlib and follow the instructions from the README.md inside that directory. This will create lib and include folders that the kernel's build process depends on.
 Finally, give execute permissions to all the .sh files inside the root directory (build.sh, config.sh etc). Then, run the following commands:
 
     - ./clean.sh
