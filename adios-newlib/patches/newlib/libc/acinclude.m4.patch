@@ -1,0 +1,10 @@
+--- newlib-4.4.0.20231231/newlib/libc/acinclude.m4	2023-12-31 13:00:18.000000000 -0400
++++ newlib-patched/newlib/libc/acinclude.m4	2025-04-24 17:34:17.909984439 -0300
+@@ -13,6 +13,7 @@
+ dnl We always recur into sys and machine, and let them decide what to do.
+ m4_foreach_w([SYS_DIR], [
+   a29khif amdgcn arm
++  adios
+   d10v
+   epiphany
+   h8300hms h8500hms

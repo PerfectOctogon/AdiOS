@@ -22,7 +22,7 @@ CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -fno-omit-frame-pointer -ffreesta
 CFLAGS:=$(CFLAGS) $(if $(HOST) == "x86_64",-z max-page-size=0x1000 -mcmodel=large -mno-red-zone,)
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
 LDFLAGS:=$(LDFLAGS) -m64 -no-pie -L$(NEWLIBDIR)/lib
-LIBS:=$(LIBS) -nostdlib -lk -lgcc -lc -lm
+LIBS:=$(LIBS) -nostdlib -lgcc -lc -lm
 
 ARCHDIR=arch/$(HOSTARCH)
 
