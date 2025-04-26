@@ -15,10 +15,13 @@ void kernel_main(void){
     printf("Initializing Interrupt Descriptor Table...\n");
     // Initialize the IDT
     idt_full_initialize();
+    puts("sugma");
+    volatile int * int_prt = (int *)malloc(sizeof(int));
+    *int_prt = 50;
 
-    int * int_prt = (int *)malloc(sizeof(int));
 
     while(1){
+        *int_prt+= 1;
         poll_keyboard();
     };
 }
