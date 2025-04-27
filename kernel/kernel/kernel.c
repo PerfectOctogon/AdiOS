@@ -16,4 +16,8 @@ void kernel_main(void){
     printf("Initializing Interrupt Descriptor Table...\n");
     // Initialize the IDT
     idt_full_initialize();
+
+    while(1){
+        poll_keyboard();
+    }
 }
