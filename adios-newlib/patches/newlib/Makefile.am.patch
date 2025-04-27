@@ -1,5 +1,5 @@
 --- newlib-4.4.0.20231231/newlib/Makefile.am	2023-12-31 13:00:18.000000000 -0400
-+++ newlib-patched/newlib/Makefile.am	2025-04-24 17:25:03.124895636 -0300
++++ newlib-patched/newlib/Makefile.am	2025-04-26 15:31:29.799405621 -0300
 @@ -113,19 +113,19 @@
  # both libc.a and libm.a.  We build them in libm.a and copy them over,
  # along with some required supporting routines.
