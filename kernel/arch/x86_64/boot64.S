@@ -13,5 +13,8 @@ long_mode_start:
     mov %ax, %fs
     mov %ax, %gs
 
+    // Enable interrupts
+    sti    
+    
     call kernel_main
     hlt

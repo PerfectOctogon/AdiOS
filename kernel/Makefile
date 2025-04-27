@@ -13,11 +13,16 @@ EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -fno-omit-frame-pointer -ffreestanding -fbuiltin -Iinclude -DKERNEL -fPIC -gdwarf-2 -mcmodel=small -m64
+# STARTFILES = $(NEWLIBDIR)/crt0.o
+# LIBGROUP = -Wl,--start-group $(NEWLIBDIR)/libc.a $(NEWLIBDIR)/libg.a $(NEWLIBDIR)/libm.a -Wl,--end-group
+
+# CFLAGS := $(CFLAGS) $(STARTFILES) $(LIBGROUP)
+
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -fno-omit-frame-pointer -ffreestanding -fbuiltin -Iinclude -DKERNEL -fPIC -gdwarf-2 -mcmodel=small -m64 -I$(NEWLIBDIR)/include
 CFLAGS:=$(CFLAGS) $(if $(HOST) == "x86_64",-z max-page-size=0x1000 -mcmodel=large -mno-red-zone,)
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
-LDFLAGS:=$(LDFLAGS) -m64 -no-pie
-LIBS:=$(LIBS) -nostdlib -lk -lgcc
+LDFLAGS:=$(LDFLAGS) -m64 -no-pie -L$(NEWLIBDIR)/lib
+LIBS:=$(LIBS) -nostdlib -lgcc -lc -lm
 
 ARCHDIR=arch/$(HOSTARCH)
 
