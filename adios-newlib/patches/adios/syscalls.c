@@ -6,6 +6,7 @@
 // ============================================================================
 
 
+#include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
@@ -14,8 +15,10 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <errno.h>
+#include "../../../kernel/include/kernel/drivers/keyboard.h"
 
 extern void terminal_write(const char * data, size_t size);
+
 
 unsigned char inportbyte(unsigned int port);
 void outportbyte(unsigned int port,unsigned char value);
@@ -119,14 +122,32 @@ int _open(const char *name, int flags, ...)
 // read - Read from a file
 int _read(int file, char *ptr, int len)
 {
-	if (file == 0) // STDIN
-	{
-		asm volatile ("call *0x00100010" : "=c"(len) : "c"(len), "D"(ptr));
-		ptr[len] = '\n'; // BareMetal does not add a newline after keyboard input ...
-		ptr[len+1] = 0; // ... but C expects it.
-		len+=1;
+	if (file != 0) // STDIN
+	{ return len;}
+	char *buffer = ptr;
+	size_t read = 0;
+
+	while(read < len){
+		enum normal_keys_e keycode;
+
+		while(dequeue_keycode(&keycode) != 0){
+
+		}
+
+		char c = kbd_get_ascii(keycode);
+
+		if(c == 0){continue;}
+
+		putchar(c);
+		fflush(stdout);
+
+		buffer[read++] = c;
+
+		if(c == '\n'){
+			break;
+		}
 	}
-	return len;
+	return read;
 }
 
 // write - Write to a file

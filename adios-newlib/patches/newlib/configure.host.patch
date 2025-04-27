@@ -1,5 +1,5 @@
 --- newlib-4.4.0.20231231/newlib/configure.host	2023-12-31 13:00:18.000000000 -0400
-+++ newlib-patched/newlib/configure.host	2025-04-24 17:34:42.536615079 -0300
++++ newlib-patched/newlib/configure.host	2025-04-26 15:31:29.812738906 -0300
 @@ -582,6 +582,9 @@
    z8k-*-coff)
  	sys_dir=z8ksim
