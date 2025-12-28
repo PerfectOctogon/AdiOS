@@ -2,8 +2,6 @@
 #include "../../include/kernel/idt.h"
 #include "../../include/kernel/pic.h"
 #include "../../include/kernel/drivers/keyboard.h"
-#include <stdio.h>
-#include <string.h>
 
 // Source : https://en.wikipedia.org/wiki/Interrupt_request
 static char * interrupt_description[]={

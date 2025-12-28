@@ -1,0 +1,58 @@
+Implement a filesystem : An organized way to store data. Data is stored as collections of related data called files.
+Files can be stored inside higher structures like folders or directories
+Different ways to store data and information, like using a b-tree (data structure based on BST).
+
+The goal is to organize 1's and 0's in such a way that software can later use those ones and zeroes. 
+FAT filesystem - File Allocation Table. The entire file system is going be based on a lookup table. It dictates the cluster chain which is basically what are the next regions of the disk in which a file will be stored.
+
+The idea of FAT - we're going to lay our disc down in a specific way:
+Reserved | FATS | Root | Data
+
+There are different version of the FAT filesystem - FAT12, FAT16, FAT32
+
+FAT12 basically means that each entry in the FAT will be 12 bits.
+
+Data region is split into clusters. Allocation unit is the size of one cluster. We assume that we can place one file in different places in the disc. If we store every single address of the byte on the disc (which you don't do), you store the sector.
+You need to save a lof of sector numbers in which the file is and when it finishes reading a sector, it has to go to the next sector to get more data from the file. This would have a lot of calls, and is sub-optimal.
+
+A cluster is a collection of sectors such that we have to ask for another cluster less frequently. This means we have to ask for the next part of the file less frequently.
+
+Reserved sector always contains the Master Boot Record (MBR)
+
+BPB - bios parameter block.
+Reserved sectors * bytesPerSector
+FATCount - tells how many FAT you have
+FATCount * SectorsPerFAT = Size in sectors of the FATS region
+
+Root directory entries
+dirEntryCount(entries in the root director) * 32(each is 32 bytes) / bytesPerSectors = amount of sectors in root region
+
+Add ReservedSectors and the sectors in the FATS and sectors in root dir, you will know at how many sectors your data region starts (Logical Block Address, or LBA)
+
+We have a partition C, let's say we want to read a file test.txt
+
+We have to calculate where the root directory starts (reservedSectors + sectors in FAT)
+
+All these calculations have to be rounded up
+
+There's going to be a field in this directory entry that is going to be the name of the file. You read that, and simply check if that name is test.txt. If yes, we've found the file. If that's not the file, you go to the next entry and check again
+This is a linear search. O(n)
+Once we match the name, we have to check a different field in root. We need to obtain the cluster id. This will tell us where we read the data. Cluster low and cluster high are low 16 and high 16 bits. All clusters are 12 bits in FAT12, so we have to look at the low bits.
+
+Given ID of cluster, you know what the next cluster you have to read is. Once you reach 0xFF8 > --> this is the end of the cluster chain
+
+dataOffset+(cluster - 2) * sectorsPerCluster
+
+Implementation of FAT 12
+
+We have to first boot from a disk, instead of an ISO image in QEMU if we want to use file storage features. For this:
+
+1. Create a blank disk image
+2. Create a partition table (MBR) and a primary partition (Use parted utility if using Linux)
+- Thsi creates the MBR label, makes a primary partition starting at 1MB and sets the boot flag
+3. Set up a loop device with partition scanning (-P), this will create /dev/loopX and /dev/loopXp1
+4. Format the partition as FAT (use FAT16, which is safer for 48MB than FAT12)
+5. Mount the partition
+6. Install Kernel and Configs
+7. Install GRUB
+8. Make sure to clean up
